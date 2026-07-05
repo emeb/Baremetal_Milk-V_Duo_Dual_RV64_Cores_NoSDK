@@ -47,6 +47,7 @@ extern "C" {
  * This function is declared here only. You have to write your custom implementation somewhere
  * \param character Character to output
  */
+#if 0
  #include "BL602.h"
  #define _putchar(x)   do{                                                     \
                            uart->uart_fifo_wdata.reg = (uint8_t)x;             \
@@ -54,6 +55,10 @@ extern "C" {
                            while(!uart->uart_fifo_config_1.bit.tx_fifo_cnt);   \
                        }while(0)
 
+#else
+ #include "soft_uart.h"
+ #define _putchar(x) soft_uart_tx((uint8_t)x)
+#endif
 
 #ifdef __cplusplus
 }
