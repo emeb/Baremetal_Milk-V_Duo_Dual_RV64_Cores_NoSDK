@@ -64,13 +64,17 @@ uint32_t uart_init(UART_TypeDef *uart)
         default:
             return 1;
     }
+	__asm(""::: "memory");
 
 	/* LCR[7] = 1 to access DRH/DRL */
 	uart->LCR = 0x80;
+	__asm(""::: "memory");
 	
 	/* Baud rate div = 25MHz / BR => 14 for 115200 from 25MHz */
 	uart->RBR_THR_DLL = 14;
+	__asm(""::: "memory");
 	uart->IER_DLH = 0;
+	__asm(""::: "memory");
 	
 	/* LCR[7] = 0 to access RBR/THR, 8N1 */
 	uart->LCR = UART_LCR_DLEN_8;
@@ -89,20 +93,15 @@ uint32_t uart_init(UART_TypeDef *uart)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-uint32_t uart_tx(UART_TypeDef *uart, uint8_t data)
+void uart_tx(UART_TypeDef *uart, uint8_t data)
 {
-	/* send character */
+	/* wait for TX empty */
+	do {
+		__asm(""::: "memory");
+	} while(!(uart->LSR & 0x20));
+	
+	/* send data */
 	uart->RBR_THR_DLL = (uint32_t)data;
-	
-	/* wait for THR empty */
-	uint32_t timeout = 1000;
-	while((uart->FCR_IIR & 0xf) != 0b0010)			// thr empty in iir reg - per datasheet
-	{
-		if(timeout-- == 0)
-			return 1;
-	}
-	
-	return 0;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -112,19 +111,16 @@ uint32_t uart_tx(UART_TypeDef *uart, uint8_t data)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-uint32_t uart_rx(UART_TypeDef *uart, uint8_t *data)
+uint8_t uart_rx(UART_TypeDef *uart)
 {
-    /* wait for RX */
- 	uint32_t timeout = 1000;
-    while((uart->LSR & 0x1) == 0)
-    {
- 		if(timeout-- == 0)
-			return 1;
-    }
+	/* wait for RX data */
+    do {
+		__asm(""::: "memory");
+    } while(!(uart->LSR & 0x1));
+
 
     /* get data */
-	*data = (uint8_t)uart->RBR_THR_DLL;
-    return 0;
+	return (uint8_t)uart->RBR_THR_DLL;
 }
 
 //-----------------------------------------------------------------------------------------

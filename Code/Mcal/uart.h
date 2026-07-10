@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#define HW_UART UART2
+#define HW_UART UART0
 
 /**
  * @struct  UART_TypeDef
@@ -89,8 +89,8 @@ typedef struct {
 #define UART_LCR_DIV_ACCESS	128
 
 uint32_t uart_init(UART_TypeDef *uart);
-uint32_t uart_tx(UART_TypeDef *uart, uint8_t data);
-uint32_t uart_rx(UART_TypeDef *uart, uint8_t *data);
+void uart_tx(UART_TypeDef *uart, uint8_t data);
+uint8_t uart_rx(UART_TypeDef *uart);
 uint32_t uart_dump(UART_TypeDef *uart);
 
 #ifdef __cplusplus
