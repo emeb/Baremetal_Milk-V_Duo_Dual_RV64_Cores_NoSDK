@@ -8,7 +8,7 @@
       "cwd": "${workspaceRoot}",
       "program": "Output/Baremetal_Milk-V_multicore_nosdk.elf",
       //"svdPath": "Code/Mcal/xxx.svd",
-      "miDebuggerPath": "${env:TOOLCHAIN_GCC_T_HEAD}-gdb.exe",
+      "miDebuggerPath": "/opt/riscv-gcc/Xuantie-900-gcc-elf-newlib-i386-V3.3.0/bin/riscv64-unknown-elf-gdb",
       "miDebuggerServerAddress": "localhost:3333",
       "MIMode": "gdb",
       "stopAtEntry": true,

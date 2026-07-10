@@ -90,7 +90,7 @@ _start:
 
 
         /* configure JTAG pinmux */
-        lui a0, 0x3001
+		lui a0, 0x3001
         li a1, 6
         sw a1, 0x24(a0)
         sw x0, 0x50(a0)

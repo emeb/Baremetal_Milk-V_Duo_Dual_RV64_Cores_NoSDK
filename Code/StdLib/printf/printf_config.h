@@ -56,8 +56,15 @@ extern "C" {
                        }while(0)
 
 #else
+#if 0
+ // soft UART
  #include "soft_uart.h"
  #define _putchar(x) soft_uart_tx((uint8_t)x)
+#else
+ // HW UART
+ #include "uart.h"
+ #define _putchar(x) uart_tx(HW_UART, (uint8_t)x)
+#endif
 #endif
 
 #ifdef __cplusplus

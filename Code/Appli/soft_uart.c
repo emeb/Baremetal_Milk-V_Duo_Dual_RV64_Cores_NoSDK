@@ -15,7 +15,7 @@ void soft_uart_init(void)
 	/* configure pinmux for XGPIOA[27] */
 	FMUX_GPIO_REG_IOCTRL_SPINOR_WP_->bits.func_sel = IO_SPINOR_WP_X_XGPIOA_27;
 
-	/* configure XGPIOA[26] as output high */
+	/* configure XGPIOA[27] as output high */
 	GPIOA->SWPORTA_DDR.bits.P27 = 1;
 	GPIOA->SWPORTA_DR.bits.P27 = 1;
 }

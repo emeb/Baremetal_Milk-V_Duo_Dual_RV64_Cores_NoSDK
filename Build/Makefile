@@ -213,6 +213,7 @@ endif
 SRC_FILES := $(SRC_DIR)/Appli/main.c            \
              $(SRC_DIR)/Appli/soft_uart.c       \
              $(SRC_DIR)/Mcal/core.c             \
+             $(SRC_DIR)/Mcal/uart.c             \
              $(SRC_DIR)/Startup/boot64.s        \
              $(SRC_DIR)/Startup/intvect.s       \
              $(SRC_DIR)/Startup/mmu.s           \
