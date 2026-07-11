@@ -24,10 +24,9 @@
 #include "gpio.h"
 #include "core.h"
 #include "uart.h"
-#include "soft_uart.h"
 #include "printf.h"
+#include "spi.h"
 #include "clkgen.h"
-#include "rstcfg.h"
 
 //-----------------------------------------------------------------------------------------
 // Function Prototypes
@@ -63,16 +62,6 @@ const char *fwVersionStr = "V0.1";
 int main(void)
 {
     /* diagnostic software UART via GPIO */
-#if 0
-    soft_uart_init();
-    printf("\n\n\r-----------------------------\n\r");
-    printf("Bare metal CV1800B + soft UART - starting up\n\r");
-    printf("Version: %s\n\r", fwVersionStr);
-    printf("Build Date: %s\n\r", bdate);
-    printf("Build Time: %s\n\r", btime);
-    printf("-----------------------------\n\r");
-#else
-	/* configure HW UART */
     if(!uart_init(HW_UART))
     {
 		printf("\n\n\r-----------------------------\n\r");
@@ -82,7 +71,6 @@ int main(void)
 		printf("Build Time: %s\n\r", btime);
 		printf("-----------------------------\n\r");
 	}
-#endif
   
 	/* configure pinmux for XGPIOA[25] */
 	FMUX_GPIO_REG_IOCTRL_SPINOR_MOSI->bits.func_sel = IO_SPINOR_MOSI_XGPIOA_25;
@@ -94,13 +82,31 @@ int main(void)
 	/* configure pinmux for XGPIOA[26] */
 	FMUX_GPIO_REG_IOCTRL_SPINOR_HOLD_->bits.func_sel = IO_SPINOR_HOLD_X_XGPIOA_26;
 
-	/* configure XGPIOA[26] as output high (diag toggle) */
+	/* configure XGPIOA[26] as output low (HW diag) */
 	GPIOA->SWPORTA_DDR.bits.P26 = 1;
-	GPIOA->SWPORTA_DR.bits.P26 = 1;
-
-	/* dump UART2 settings */
-	uart_dump(UART0);
+	GPIOA->SWPORTA_DR.bits.P26 = 0;
 	
+	printf("CLKGEN->clk_en_1 = 0x%08X\n\r", CLKGEN->clk_en_1);
+	printf("SPI2->CTRLR0 = 0x%08X\n\r", SPI2->CTRLR0);
+	printf("SPI2->BAUDR = 0x%08X\n\r", SPI2->BAUDR);
+	printf("SPI2->SPIENR = 0x%08X\n\r", SPI2->SPIENR);
+	printf("&SPI2->DR = 0x%08X, 0x%08X\n\r", &(SPI2->DR), SPI2_BASE); 
+	/* start SPI */
+	if(spi_init(HW_SPI))
+	{
+		printf("SPI init failed\n\r");
+	}
+	else
+	{
+		printf("SPI initialized\n\r");
+	}
+	uint8_t spi_tx[13] = "Hello World!";
+	uint8_t spi_rx[16];
+	printf("CLKGEN->clk_en_1 = 0x%08X\n\r", CLKGEN->clk_en_1);
+	printf("SPI2->CTRLR0 = 0x%08X\n\r", SPI2->CTRLR0);
+	printf("SPI2->BAUDR = 0x%08X\n\r", SPI2->BAUDR);
+	printf("SPI2->SPIENR = 0x%08X\n\r", SPI2->SPIENR);
+
 	/* start the second core*/
 	core_start_core1();
 
@@ -111,11 +117,21 @@ int main(void)
 	while(1)
 	{
 		// send char
-		//soft_uart_tx('.');
 		uart_tx(HW_UART, '+');
-
-		// toggle GPIO
-		GPIOA->SWPORTA_DR.bits.P26 ^= 1;
+		
+		// send SPI data w/ GPIO bracket
+		GPIOA->SWPORTA_DR.bits.P26 = 1;
+		//spi_tx(HW_SPI, spi_tx, sizeof(spi_tx));
+		spi_txrx(HW_SPI, spi_tx, spi_rx, sizeof(spi_tx));
+		GPIOA->SWPORTA_DR.bits.P26 = 0;
+		
+		/* dump rx */
+		printf("rx: ");
+		for(int i=0;i<16;i++)
+		{
+			printf("%02X ", spi_rx[i]);
+		}
+		printf("\n\r");
 		
 		delayms(100);
 	}
