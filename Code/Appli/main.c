@@ -27,6 +27,7 @@
 #include "printf.h"
 #include "spi.h"
 #include "clkgen.h"
+#include "i2c.h"
 
 //-----------------------------------------------------------------------------------------
 // Function Prototypes
@@ -86,6 +87,7 @@ int main(void)
 	GPIOA->SWPORTA_DDR.bits.P26 = 1;
 	GPIOA->SWPORTA_DR.bits.P26 = 0;
 	
+#if 0
 	printf("CLKGEN->clk_en_1 = 0x%08X\n\r", CLKGEN->clk_en_1);
 	printf("SPI2->CTRLR0 = 0x%08X\n\r", SPI2->CTRLR0);
 	printf("SPI2->BAUDR = 0x%08X\n\r", SPI2->BAUDR);
@@ -106,7 +108,21 @@ int main(void)
 	printf("SPI2->CTRLR0 = 0x%08X\n\r", SPI2->CTRLR0);
 	printf("SPI2->BAUDR = 0x%08X\n\r", SPI2->BAUDR);
 	printf("SPI2->SPIENR = 0x%08X\n\r", SPI2->SPIENR);
+#endif
 
+#if 1
+	/* start I2C */
+	if(i2c_init(HW_I2C))
+	{
+		printf("I2C init failed\n\r");
+	}
+	else
+	{
+		printf("I2C initialized\n\r");
+	}
+	uint8_t i2c_tx[13] = "Hello World!";
+#endif
+	
 	/* start the second core*/
 	core_start_core1();
 
@@ -119,6 +135,7 @@ int main(void)
 		// send char
 		uart_tx(HW_UART, '+');
 		
+#if 0
 		// send SPI data w/ GPIO bracket
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
 		//spi_tx(HW_SPI, spi_tx, sizeof(spi_tx));
@@ -132,7 +149,15 @@ int main(void)
 			printf("%02X ", spi_rx[i]);
 		}
 		printf("\n\r");
-		
+#endif
+
+#if 1
+		// I2C transaction
+		GPIOA->SWPORTA_DR.bits.P26 = 1;
+		i2c_tx(HW_I2C, i2c_tx, sizeof(i2c_tx));
+		GPIOA->SWPORTA_DR.bits.P26 = 0;
+#endif
+
 		delayms(100);
 	}
 

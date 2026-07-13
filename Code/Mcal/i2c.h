@@ -88,6 +88,22 @@ typedef struct {
 #define I2C3    ((I2C_TypeDef *)I2C3_BASE)
 #define I2C4    ((I2C_TypeDef *)I2C4_BASE)
 
+/* timing values */
+#define IC_SS_SCL_HCNT_25M	115
+#define IC_SS_SCL_LCNT_25M	135
+#define IC_FS_SCL_HCNT_25M	21
+#define IC_FS_SCL_LCNT_25M	42
+#define IC_SDA_HOLD_25M 1
+#define IC_SDA_SETUP_25M 6
+#define IC_FS_SPKLEN_25M 2
+#define IC_SS_SCL_HCNT_100M	460
+#define IC_SS_SCL_LCNT_100M	540
+#define IC_FS_SCL_HCNT_100M	90
+#define IC_FS_SCL_LCNT_100M	160
+#define IC_SDA_HOLD_100M 1
+#define IC_SDA_SETUP_100M 25
+#define IC_FS_SPKLEN_100M 5
+
 /* Register fields */
 #define IC_CON_MASTER_MODE 1
 #define IC_CON_SPEED_100K (1<<1)
@@ -100,7 +116,9 @@ typedef struct {
 #define IC_TAR_GC_OR_START (1<<10)
 #define IC_TAR_SPECIAL (1<<11)
 #define IC_SAR_IC_SAR_MASK (0x3FF)
-
+#define IC_DATA_CMD_READ (1<<8)
+#define IC_DATA_CMD_STOP (1<<9)
+#define IC_DATA_CMD_RESTART (1<<10)
 
 /* Functions */
 uint32_t i2c_init(I2C_TypeDef *i2c);
