@@ -27,8 +27,8 @@ extern "C" {
 #define HW_SPI SPI2
 
 /**
- * @struct  UART_TypeDef
- * @brief   UART Register Layout
+ * @struct  SPI_TypeDef
+ * @brief   SPI Register Layout
  */
 typedef struct {
 	volatile uint32_t CTRLR0;	/* 0x000: Control Register 0 */

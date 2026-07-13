@@ -42,11 +42,12 @@ uint32_t i2c_init(I2C_TypeDef *i2c)
 	__asm(""::: "memory");
 	
 	/* clk src selection 25MHz or 100MHz */
-	CLKGEN->clk_sel_0 |= (1<<31);
+	//CLKGEN->clk_sel_0 |= (uint32_t)(1<<31);
+	CLKGEN->clk_sel_0 &= (uint32_t)~(1<<31);
 	__asm(""::: "memory");
 	
 	/* clk ena for all I2C */
-	CLKGEN->clk_en_1 |= (1<<6);
+	CLKGEN->clk_en_1 |= (uint32_t)(1<<6);
 	__asm(""::: "memory");
 	
 	/* disable I2C */
@@ -86,13 +87,18 @@ uint32_t i2c_init(I2C_TypeDef *i2c)
 //-----------------------------------------------------------------------------------------
 void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len)
 {
+	uint32_t dummy __attribute__((unused));
+	
 	/* set target address, start */
-	i2c->IC_TAR = (addr & 0x7f) | IC_TAR_GC_OR_START | IC_TAR_SPECIAL;
+	i2c->IC_TAR = (addr & 0x7f);
 	__asm(""::: "memory");
 	
 	/* enable I2C */
 	i2c->IC_ENABLE = 1;
 	__asm(""::: "memory");
+	
+	/* clear IRQs */
+	dummy = i2c->IC_CLR_INTR;
 
 	/* begin data */
 	while(len--)
@@ -101,7 +107,21 @@ void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len)
 		i2c->IC_DATA_CMD = *data++ | (len==0 ? IC_DATA_CMD_STOP : 0);
 		__asm(""::: "memory");
 		
-		while
+		/* wait if full */
+		while(!(i2c->IC_STATUS & IC_STATUS_ST_TFNF))
+		{
+			__asm(""::: "memory");
+		}
 	}
+	
+	/* wait for not busy */
+	while(i2c->IC_STATUS & IC_STATUS_ST_MST_ACTIVITY)
+	{
+		__asm(""::: "memory");
+	}
+
+	/* disable I2C */
+	i2c->IC_ENABLE = 0;
+	__asm(""::: "memory");
 }
 

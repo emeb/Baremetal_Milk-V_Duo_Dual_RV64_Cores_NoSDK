@@ -119,10 +119,17 @@ typedef struct {
 #define IC_DATA_CMD_READ (1<<8)
 #define IC_DATA_CMD_STOP (1<<9)
 #define IC_DATA_CMD_RESTART (1<<10)
+#define IC_STATUS_ST_ACTIVITY 1
+#define IC_STATUS_ST_TFNF (1<<1)
+#define IC_STATUS_ST_TFE (1<<2)
+#define IC_STATUS_ST_RFNE (1<<3)
+#define IC_STATUS_ST_RFF (1<<4)
+#define IC_STATUS_ST_MST_ACTIVITY (1<<5)
+#define IC_STATUS_ST_SLV_ACTIVITY (1<<6)
 
 /* Functions */
 uint32_t i2c_init(I2C_TypeDef *i2c);
-void i2c_tx(I2C_TypeDef *i2c, uint8_t *data, uint32_t len);
+void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len);
 
 #ifdef __cplusplus
 }
