@@ -130,6 +130,8 @@ typedef struct {
 /* Functions */
 uint32_t i2c_init(I2C_TypeDef *i2c);
 void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len);
+void i2c_txrx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *tx_data, uint32_t txlen,
+	uint8_t *rx_data, uint32_t rxlen);
 
 #ifdef __cplusplus
 }

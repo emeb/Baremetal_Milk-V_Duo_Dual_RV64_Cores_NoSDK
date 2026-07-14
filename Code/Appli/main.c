@@ -120,8 +120,10 @@ int main(void)
 	{
 		printf("I2C initialized\n\r");
 	}
-	uint8_t i2c_txbuf[13] = "Hello World!";
-	uint8_t target_addr = 0x3c;
+	uint8_t i2c_txbuf[] = "Hello World!";
+	//uint8_t i2c_txbuf[2] = {0};
+	uint8_t i2c_rxbuf[2];
+	uint8_t target_addr = 0x1A;
 #endif
 	
 	/* start the second core*/
@@ -155,7 +157,9 @@ int main(void)
 #if 1
 		// I2C transaction
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
-		i2c_tx(HW_I2C, target_addr, i2c_txbuf, sizeof(i2c_txbuf));
+		i2c_tx(HW_I2C, target_addr, i2c_txbuf, 4);
+		//i2c_txrx(HW_I2C, target_addr, i2c_txbuf, sizeof(i2c_txbuf),
+		//	i2c_rxbuf, 2);
 		GPIOA->SWPORTA_DR.bits.P26 = 0;
 #endif
 

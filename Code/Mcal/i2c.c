@@ -125,3 +125,72 @@ void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len)
 	__asm(""::: "memory");
 }
 
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+void i2c_txrx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *tx_data, uint32_t tx_len,
+	uint8_t *rx_data, uint32_t rx_len)
+{
+	uint32_t dummy __attribute__((unused));
+	
+	/* set target address, start */
+	i2c->IC_TAR = (addr & 0x7f);
+	__asm(""::: "memory");
+	
+	/* enable I2C */
+	i2c->IC_ENABLE = 1;
+	__asm(""::: "memory");
+	
+	/* clear IRQs */
+	dummy = i2c->IC_CLR_INTR;
+
+	/* send tx data */
+	while(tx_len--)
+	{
+		/* send data */
+		i2c->IC_DATA_CMD = *tx_data++;
+		__asm(""::: "memory");
+		
+		/* wait if full */
+		while(!(i2c->IC_STATUS & IC_STATUS_ST_TFNF))
+		{
+			__asm(""::: "memory");
+		}
+	}
+	
+	/* tell it to restart and read */
+	i2c->IC_DATA_CMD = IC_DATA_CMD_READ | IC_DATA_CMD_RESTART;
+	__asm(""::: "memory");
+	
+	/* get rx data */
+	while(rx_len--)
+	{
+		/* wait for data */
+		while(!(i2c->IC_STATUS & IC_STATUS_ST_RFNE))
+		{
+			__asm(""::: "memory");
+		}
+		
+		/* get data */
+		*rx_data++ = (uint8_t)i2c->IC_DATA_CMD;
+		__asm(""::: "memory");
+	}
+		
+	/* All done - generate read + stop */
+	i2c->IC_DATA_CMD = IC_DATA_CMD_READ | IC_DATA_CMD_STOP;
+	__asm(""::: "memory");
+	
+	/* wait for not busy */
+	while(i2c->IC_STATUS & IC_STATUS_ST_MST_ACTIVITY)
+	{
+		__asm(""::: "memory");
+	}
+
+	/* disable I2C */
+	i2c->IC_ENABLE = 0;
+	__asm(""::: "memory");
+}
