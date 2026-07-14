@@ -120,8 +120,8 @@ int main(void)
 	{
 		printf("I2C initialized\n\r");
 	}
-	uint8_t i2c_txbuf[] = "Hello World!";
-	//uint8_t i2c_txbuf[2] = {0};
+	//uint8_t i2c_txbuf[] = "Hello World!";
+	uint8_t i2c_txbuf[2] = {0x0c, 0x0};	// should be a read from reg 6 = 0x140
 	uint8_t i2c_rxbuf[2];
 	uint8_t target_addr = 0x1A;
 #endif
@@ -157,10 +157,14 @@ int main(void)
 #if 1
 		// I2C transaction
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
-		i2c_tx(HW_I2C, target_addr, i2c_txbuf, 4);
-		//i2c_txrx(HW_I2C, target_addr, i2c_txbuf, sizeof(i2c_txbuf),
-		//	i2c_rxbuf, 2);
+		//i2c_tx(HW_I2C, target_addr, i2c_txbuf, 2);
+		uint32_t errstat = i2c_txrx(HW_I2C, target_addr, i2c_txbuf, 1,
+			i2c_rxbuf, 2);
 		GPIOA->SWPORTA_DR.bits.P26 = 0;
+		if(errstat)
+			printf("Error %1d\n\r", errstat);
+		else
+			printf("RX Data = %02X %02X\n\r", i2c_rxbuf[0], i2c_rxbuf[1]);
 #endif
 
 		delayms(100);

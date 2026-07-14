@@ -85,9 +85,10 @@ uint32_t i2c_init(I2C_TypeDef *i2c)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len)
+uint32_t i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len)
 {
 	uint32_t dummy __attribute__((unused));
+	uint32_t timeout;
 	
 	/* set target address, start */
 	i2c->IC_TAR = (addr & 0x7f);
@@ -100,29 +101,59 @@ void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len)
 	/* clear IRQs */
 	dummy = i2c->IC_CLR_INTR;
 
-	/* begin data */
-	while(len--)
+	/* begin data - send all but last byte */
+	while(len-- > 1)
 	{
 		/* send data and stop */
-		i2c->IC_DATA_CMD = *data++ | (len==0 ? IC_DATA_CMD_STOP : 0);
+		//i2c->IC_DATA_CMD = *data++ | (len==0 ? IC_DATA_CMD_STOP : 0);
+		i2c->IC_DATA_CMD = *data++;
 		__asm(""::: "memory");
 		
 		/* wait if full */
+		timeout = 10000;
 		while(!(i2c->IC_STATUS & IC_STATUS_ST_TFNF))
 		{
 			__asm(""::: "memory");
+			if(timeout-- == 0)
+			{
+				i2c->IC_ENABLE = 0;
+				return 1;
+			}
 		}
 	}
 	
+	/* wait for activity to start before issuing stop */
+	timeout = 10000;
+	while(!(i2c->IC_STATUS & IC_STATUS_ST_ACTIVITY))
+	{
+		__asm(""::: "memory");
+		if(timeout-- == 0)
+		{
+			i2c->IC_ENABLE = 0;
+			return 2;
+		}
+	}
+	
+	/* send last byte + stop */
+	i2c->IC_DATA_CMD = *data | IC_DATA_CMD_STOP;
+	
 	/* wait for not busy */
+	timeout = 10000;
 	while(i2c->IC_STATUS & IC_STATUS_ST_MST_ACTIVITY)
 	{
 		__asm(""::: "memory");
+		if(timeout-- == 0)
+		{
+			i2c->IC_ENABLE = 0;
+			return 4;
+		}
 	}
 
 	/* disable I2C */
 	i2c->IC_ENABLE = 0;
 	__asm(""::: "memory");
+	
+	return 0;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -132,10 +163,11 @@ void i2c_tx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *data, uint32_t len)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-void i2c_txrx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *tx_data, uint32_t tx_len,
+uint32_t i2c_txrx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *tx_data, uint32_t tx_len,
 	uint8_t *rx_data, uint32_t rx_len)
 {
 	uint32_t dummy __attribute__((unused));
+	uint32_t timeout;
 	
 	/* set target address, start */
 	i2c->IC_TAR = (addr & 0x7f);
@@ -156,41 +188,93 @@ void i2c_txrx(I2C_TypeDef *i2c, uint8_t addr, uint8_t *tx_data, uint32_t tx_len,
 		__asm(""::: "memory");
 		
 		/* wait if full */
+		timeout = 10000;
 		while(!(i2c->IC_STATUS & IC_STATUS_ST_TFNF))
 		{
 			__asm(""::: "memory");
+			if(timeout-- == 0)
+			{
+				i2c->IC_ENABLE = 0;
+				return 1;
+			}
+		}
+	}
+	
+	/* wait for activity to start */
+	timeout = 10000;
+	while(!(i2c->IC_STATUS & IC_STATUS_ST_ACTIVITY))
+	{
+		__asm(""::: "memory");
+		if(timeout-- == 0)
+		{
+			i2c->IC_ENABLE = 0;
+			return 2;
 		}
 	}
 	
 	/* tell it to restart and read */
 	i2c->IC_DATA_CMD = IC_DATA_CMD_READ | IC_DATA_CMD_RESTART;
 	__asm(""::: "memory");
-	
+		
 	/* get rx data */
-	while(rx_len--)
+	timeout = 10000;
+	tx_len = rx_len-1;
+	while(1)
 	{
-		/* wait for data */
-		while(!(i2c->IC_STATUS & IC_STATUS_ST_RFNE))
+		/* check status */
+		uint32_t stat = i2c->IC_STATUS;
+		__asm(""::: "memory");
+		
+		/* check for RX & get data */
+		if(stat & IC_STATUS_ST_RFNE)
 		{
+			*rx_data++ = (uint8_t)i2c->IC_DATA_CMD;
 			__asm(""::: "memory");
+			rx_len--;
+			if(rx_len == 0)
+				break;
 		}
 		
-		/* get data */
-		*rx_data++ = (uint8_t)i2c->IC_DATA_CMD;
-		__asm(""::: "memory");
-	}
+		/* check for time to send another read cmd */
+		if(stat & IC_STATUS_ST_TFE)
+		{
+			if(tx_len)
+			{
+				uint32_t cmd = IC_DATA_CMD_READ;
+				if(tx_len == 1)
+					cmd |= IC_DATA_CMD_STOP;
+				
+				i2c->IC_DATA_CMD = cmd;
+				__asm(""::: "memory");
+				
+				tx_len--;
+			}
+		}
 		
-	/* All done - generate read + stop */
-	i2c->IC_DATA_CMD = IC_DATA_CMD_READ | IC_DATA_CMD_STOP;
-	__asm(""::: "memory");
+		/* check for timeout */
+		if(timeout-- == 0)
+		{
+			i2c->IC_ENABLE = 0;
+			__asm(""::: "memory");
+			return 3;
+		}
+	}
 	
 	/* wait for not busy */
+	timeout = 10000;
 	while(i2c->IC_STATUS & IC_STATUS_ST_MST_ACTIVITY)
 	{
 		__asm(""::: "memory");
+		if(timeout-- == 0)
+		{
+			i2c->IC_ENABLE = 0;
+			return 4;
+		}
 	}
 
 	/* disable I2C */
 	i2c->IC_ENABLE = 0;
 	__asm(""::: "memory");
+	
+	return 0;
 }
