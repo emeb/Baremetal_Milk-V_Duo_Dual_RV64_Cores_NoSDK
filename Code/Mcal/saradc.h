@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#define HW_SARADC SARADC
+
 /**
  * @struct  SARADC_TypeDef
  * @brief   SARADC Register Layout
@@ -55,21 +57,19 @@ typedef struct {
 #define SARADC    ((SARADC_TypeDef *)SARADC_BASE)
 
 /* channels */
-#define SARADC_CHL0 1
-#define SARADC_CHL1 (1<<1)
-#define SARADC_CHL2 (1<<2)
+#define SARADC_CHL1 1
+#define SARADC_CHL2 (1<<1)
+#define SARADC_CHL3 (1<<2)
 
 /* Register fields */
 #define SARADC_CTRL_EN 1
-#define SARADC_CTRL_SEL0 (1<<4)
-#define SARADC_CTRL_SEL1 (1<<5)
-#define SARADC_CTRL_SEL2 (1<<6)
-#define SARADC_CTRL_SEL3 (1<<7)
+#define SARADC_CTRL_SEL1 (1<<4)
+#define SARADC_CTRL_SEL2 (1<<5)
+#define SARADC_CTRL_SEL3 (1<<6)
 #define SARADC_STATUS_BUSY 1
 #define SARADC_STATUS_CH0_BUSY (1<<4)
 #define SARADC_STATUS_CH1_BUSY (1<<5)
 #define SARADC_STATUS_CH2_BUSY (1<<6)
-#define SARADC_STATUS_CH3_BUSY (1<<7)
 #define SARADC_CYC_SETTLING 0x1f
 #define SARADC_CYC_SAMP (0x7<<8)
 #define SARADC_CYC_CLKDIV (0xf<<12)

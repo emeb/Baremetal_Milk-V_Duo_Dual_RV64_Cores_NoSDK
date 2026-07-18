@@ -16,6 +16,7 @@
 ******************************************************************************************/
 
 #include "saradc.h"
+#include "gpio.h"
 #include "pinmux.h"
 #include "clkgen.h"
 #include "printf.h"
@@ -30,17 +31,17 @@
 uint32_t saradc_init(SARADC_TypeDef *saradc, uint8_t chls)
 {
 	/* set GPIO to input */
-	if(chls & SARADC_CHL0)
+	if(chls & SARADC_CHL1)
 	{
 		FMUX_GPIO_REG_IOCTRL_ADC1->bits.func_sel = IO_ADC1_XGPIOB_3;
 		GPIOB->SWPORTA_DDR.bits.P3 = 0;
 	}
-	else if(chls & SARADC_CHL1)
+	else if(chls & SARADC_CHL2)
 	{
 		FMUX_GPIO_REG_IOCTRL_USB_VBUS_DET->bits.func_sel = IO_USB_VBUS_DET_XGPIOB_6;
 		GPIOB->SWPORTA_DDR.bits.P6 = 0;
 	}
-	else if(chls & SARADC_CHL2)
+	else if(chls & SARADC_CHL3)
 	{
 		FMUX_GPIO_REG_IOCTRL_PWR_VBAT_DET->bits.func_sel = IO_PWR_VBAT_DET_PWR_VBAT_DET;
 	}
@@ -49,34 +50,37 @@ uint32_t saradc_init(SARADC_TypeDef *saradc, uint8_t chls)
 	
 	/* enable clock */
 	CLKGEN->clk_en_0 |= (uint32_t)(1<<10);
+	printf("clken_0 = 0x%08X\n\r", CLKGEN->clk_en_0);
 	
 	/* set trim value to top 4 bits of efuse adc trim reg */
 #define TRIM_VALUE 0 	// dummy for now
-	saradc->saradc_trim = TRIM_VALUE << 28;
+	//saradc->saradc_trim = TRIM_VALUE << 28;
 	
 	/* configure timing */
-	saradc->saradc_cyc_set = SARADC_CYC_SETTLING | SARADC_CYC_SAMP | SARADC_CYC_CLKDIV;
-	
+	saradc->saradc_cyc_set = SARADC_CYC_SETTLING | SARADC_CYC_SAMP | 
+		SARADC_CYC_CLKDIV | (0xb<<16);
+
 	return 0;
 }
 
-\//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 /// \brief  
 ///
 /// \param  
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-uint32_t saradc_getchl(SARADC_TypeDef *saradc, uint8_t chl, uint16_t *result);
+uint32_t saradc_getchl(SARADC_TypeDef *saradc, uint8_t chl, uint16_t *result)
 {
-	if(chl > 0xf)
+	/* check for valid channel */
+	if((chl < 1) || (chl > 3))
 		return 1;
 	
 	/* set channel */
 	uint32_t ctrl = saradc->saradc_ctrl;
 	__asm(""::: "memory");
-	ctrl &= ~(0xf<<4);
-	ctrl |= ((chl & 0xf) << 4;
+	ctrl &= ~(0xfu<<4);
+	ctrl |= (1<<(chl+4));
 	saradc->saradc_ctrl = ctrl;
 	__asm(""::: "memory");
 	
@@ -85,28 +89,32 @@ uint32_t saradc_getchl(SARADC_TypeDef *saradc, uint8_t chl, uint16_t *result);
 	__asm(""::: "memory");
 
 	/* wait for results */
+	uint32_t timeout = 10000;
 	while(saradc->saradc_status & SARADC_STATUS_BUSY)
 	{
 		__asm(""::: "memory");
+		if(timeout-- == 0)
+			return 2;
 	}
 	
 	/* get result */
 	switch(chl)
 	{
 		case 1:
-			*result = saradc->saradc_ch1_result;
+			*result = (uint16_t)saradc->saradc_ch1_result;
 			break;
 		
 		case 2:
-			*result = saradc->saradc_ch1_result;
+			*result = (uint16_t)saradc->saradc_ch2_result;
 			break;
 		
 		case 3:
-			*result = saradc->saradc_ch1_result;
+			*result = (uint16_t)saradc->saradc_ch3_result;
 			break;
 		
 		default:
 			*result = 4096;
+			return 3;
 	}
 	
 	return 0;

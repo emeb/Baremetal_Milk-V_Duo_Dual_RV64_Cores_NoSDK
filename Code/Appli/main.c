@@ -28,6 +28,7 @@
 #include "spi.h"
 #include "clkgen.h"
 #include "i2c.h"
+#include "saradc.h"
 
 //-----------------------------------------------------------------------------------------
 // Function Prototypes
@@ -110,7 +111,7 @@ int main(void)
 	printf("SPI2->SPIENR = 0x%08X\n\r", SPI2->SPIENR);
 #endif
 
-#if 1
+#if 0
 	/* start I2C */
 	if(i2c_init(HW_I2C))
 	{
@@ -125,7 +126,19 @@ int main(void)
 	uint8_t i2c_rxbuf[2];
 	uint8_t target_addr = 0x1A;
 #endif
-	
+
+#if 1
+	/* start ADC */
+	if(saradc_init(HW_SARADC, SARADC_CHL1 | SARADC_CHL2 | SARADC_CHL3))
+	{
+		printf("SARADC init failed\n\r");
+	}
+	else
+	{
+		printf("SARADC initialized\n\r");
+	}
+#endif
+
 	/* start the second core*/
 	core_start_core1();
 
@@ -154,7 +167,7 @@ int main(void)
 		printf("\n\r");
 #endif
 
-#if 1
+#if 0
 		// I2C transaction
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
 		//i2c_tx(HW_I2C, target_addr, i2c_txbuf, 2);
@@ -165,6 +178,20 @@ int main(void)
 			printf("Error %1d\n\r", errstat);
 		else
 			printf("RX Data = %02X %02X\n\r", i2c_rxbuf[0], i2c_rxbuf[1]);
+#endif
+
+#if 1
+		// SARADC tests
+		for(uint8_t i=1;i<4;i++)
+		{
+			uint16_t adc_val;
+			uint32_t adc_stat;
+			if((adc_stat = saradc_getchl(HW_SARADC, i, &adc_val)))
+				printf("XXX%1d ", adc_stat);
+			else
+				printf("%4d ", adc_val & 0xfff);
+		}
+		printf("\n\r");
 #endif
 
 		delayms(100);
