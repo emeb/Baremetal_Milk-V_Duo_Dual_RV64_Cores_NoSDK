@@ -20,6 +20,7 @@
 #include "pinmux.h"
 #include "clkgen.h"
 #include "printf.h"
+#include "efuse.h"
 
 //-----------------------------------------------------------------------------------------
 /// \brief  
@@ -52,10 +53,12 @@ uint32_t saradc_init(SARADC_TypeDef *saradc, uint8_t chls)
 	CLKGEN->clk_en_0 |= (uint32_t)(1<<10);
 	printf("clken_0 = 0x%08X\n\r", CLKGEN->clk_en_0);
 	
-	/* set trim value to top 4 bits of efuse adc trim reg */
-#define TRIM_VALUE 0 	// dummy for now
-	//saradc->saradc_trim = TRIM_VALUE << 28;
-	
+	/* set trim value to top 4 bits of efuse adc trim reg 0x118 */
+	printf("trim = 0x%08X\n\r", saradc->saradc_trim);
+	uint32_t trim_value = (EFUSE->Analog0 >> 28) & 0xf;
+	saradc->saradc_trim = trim_value;
+	printf("trim = 0x%08X\n\r", saradc->saradc_trim);
+
 	/* configure timing */
 	saradc->saradc_cyc_set = SARADC_CYC_SETTLING | SARADC_CYC_SAMP | 
 		SARADC_CYC_CLKDIV | (0xb<<16);

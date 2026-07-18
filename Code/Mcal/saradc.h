@@ -15,8 +15,8 @@
   
 ******************************************************************************************/
 
-#ifndef ADC_H
-#define ADC_H
+#ifndef SARADC_H
+#define SARADC_H
 
 #include <stdint.h>
 
@@ -51,10 +51,12 @@ typedef struct {
 } SARADC_TypeDef;
 
 /* Peripheral Base Definitions */
-#define SARADC_BASE    (0x030F0000ull)
+#define SARADC_BASE			(0x030F0000ull)
+#define RTCSYS_SARADC_BASE	(0x0502C000ull)
 
 /* Instance Pointers */
-#define SARADC    ((SARADC_TypeDef *)SARADC_BASE)
+#define SARADC    			((SARADC_TypeDef *)SARADC_BASE)
+#define RTCSYS_SARADC		((SARADC_TypeDef *)RTCSYS_SARADC_BASE)
 
 /* channels */
 #define SARADC_CHL1 1
