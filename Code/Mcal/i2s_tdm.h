@@ -87,7 +87,7 @@ typedef struct {
 #define I2S_TDM_SLOT_SETTING1_SLOT_NUM_POS			(0)
 #define I2S_TDM_SLOT_SETTING1_SLOT_NUM_MASK			(0xf)
 #define I2S_TDM_SLOT_SETTING1_SLOT_SIZE_POS			(8)
-#define I2S_TDM_SLOT_SETTING1_SLOT_NUM_MASK			(0x3f<<I2S_TDM_SLOT_SETTING1_SLOT_SIZE_POS)
+#define I2S_TDM_SLOT_SETTING1_SLOT_SIZE_MASK		(0x3f<<I2S_TDM_SLOT_SETTING1_SLOT_SIZE_POS)
 #define I2S_TDM_SLOT_SETTING1_DATA_SIZE_POS			(16)
 #define I2S_TDM_SLOT_SETTING1_DATA_NUM_MASK			(0x1f<<I2S_TDM_SLOT_SETTING1_DATA_SIZE_POS)
 #define I2S_TDM_SLOT_SETTING1_FB_OFFSET_POS			(24)
@@ -109,10 +109,12 @@ typedef struct {
 #define I2S_TDM_BLK_TX_FIFO_DMA_CLK_FORCE_EN		(1<<17)
 #define I2S_TDM_I2S_RESET_TX						(1)
 #define I2S_TDM_I2S_RESET_RX						(2)
-
-
-
 /* more to come... */
+
+void i2s_io_bypass(void);
+uint32_t i2s_ext_init(void);
+void i2s_ext_tx(void);
+
 
 #ifdef __cplusplus
 }

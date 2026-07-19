@@ -217,6 +217,8 @@ SRC_FILES := $(SRC_DIR)/Appli/main.c            \
              $(SRC_DIR)/Mcal/spi.c              \
              $(SRC_DIR)/Mcal/i2c.c              \
              $(SRC_DIR)/Mcal/saradc.c           \
+             $(SRC_DIR)/Mcal/i2s_tdm.c          \
+             $(SRC_DIR)/Mcal/delay.c            \
              $(SRC_DIR)/Startup/boot64.s        \
              $(SRC_DIR)/Startup/intvect.s       \
              $(SRC_DIR)/Startup/mmu.s           \

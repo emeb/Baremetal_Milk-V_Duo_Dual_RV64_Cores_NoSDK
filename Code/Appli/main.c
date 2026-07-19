@@ -29,13 +29,14 @@
 #include "clkgen.h"
 #include "i2c.h"
 #include "saradc.h"
+#include "i2s_tdm.h"
+#include "delay.h"
 
 //-----------------------------------------------------------------------------------------
 // Function Prototypes
 //-----------------------------------------------------------------------------------------
 int main_core1(void);
 void isr_timer(void);
-void delayms(uint32_t ms);
 
 //-----------------------------------------------------------------------------------------
 // Globals
@@ -127,7 +128,7 @@ int main(void)
 	uint8_t target_addr = 0x1A;
 #endif
 
-#if 1
+#if 0
 	/* start ADC */
 	if(saradc_init(HW_SARADC, SARADC_CHL1 | SARADC_CHL2 | SARADC_CHL3))
 	{
@@ -136,6 +137,18 @@ int main(void)
 	else
 	{
 		printf("SARADC initialized\n\r");
+	}
+#endif
+
+#if 1
+	/* start I2S external */
+	if(i2s_ext_init())
+	{
+		printf("I2S Ext init failed\n\r");
+	}
+	else
+	{
+		printf("I2S Ext initialized\n\r");
 	}
 #endif
 
@@ -180,7 +193,7 @@ int main(void)
 			printf("RX Data = %02X %02X\n\r", i2c_rxbuf[0], i2c_rxbuf[1]);
 #endif
 
-#if 1
+#if 0
 		// SARADC tests
 		for(uint8_t i=1;i<4;i++)
 		{
@@ -194,6 +207,11 @@ int main(void)
 		printf("\n\r");
 #endif
 
+#if 1
+		GPIOA->SWPORTA_DR.bits.P26 = 1;
+		i2s_ext_tx();
+		GPIOA->SWPORTA_DR.bits.P26 = 0;
+#endif
 		delayms(100);
 	}
 
@@ -264,24 +282,5 @@ void isr_timer(void)
     /* error identifying the active core */
     __asm("j .");
   }
-}
-
-//-----------------------------------------------------------------------------------------
-/// \brief  
-///
-/// \param  
-///
-/// \return 
-//-----------------------------------------------------------------------------------------
-void delayms(uint32_t ms)
-{
-	while(ms--)
-	{
-		/* 1 ms busywait delay */
-		for(int i=0;i<283360;i++)
-		{
-		  __asm("nop");
-		}
-	}
 }
 
