@@ -15,6 +15,7 @@
   
 ******************************************************************************************/
 #include "i2s_tdm.h"
+#include "aiao.h"
 #include "gpio.h"
 #include "pinmux.h"
 #include "printf.h"
@@ -62,14 +63,16 @@ void i2s_io_bypass(void)
 //-----------------------------------------------------------------------------------------
 uint32_t i2s_ext_init(void)
 {
+	/* bypass ethernet PHY */
 	i2s_io_bypass();
 	
-#if 0
+#if 1
 	/* set up IO pins for I2S */
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXP->bits.func_sel = IO_PAD_ETH_TXP_IIS2_LRCK;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXM->bits.func_sel = IO_PAD_ETH_TXM_IIS2_BCLK;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_RXP->bits.func_sel = IO_PAD_ETH_RXP_IIS2_DO;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_RXM->bits.func_sel = IO_PAD_ETH_RXM_IIS2_DI;
+	FMUX_GPIO_REG_IOCTRL_AUX0->bits.func_sel = IO_AUX0_IIS1_MCLK;
 #else
 	/* set up IO pins for GPIO to test */
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXP->bits.func_sel = IO_PAD_ETH_TXP_XGPIOB_25;
@@ -86,6 +89,13 @@ uint32_t i2s_ext_init(void)
 	GPIOB->SWPORTA_DR.bits.P26 = 1;
 #endif
 
+	/* Set AIAO muxes for external I2S */
+	AIAO->i2s_tdm_sclk_in_sel = 0x7124;
+	AIAO->i2s_tdm_fs_in_sel = 0x7124;
+	AIAO->i2s_tdm_sdi_in_sel = 0x7664;
+	AIAO->i2s_tdm_sdo_out_sel = 0x7664;
+	/* multi-sync = 0 too - where's that? */
+	AIAO->i2s_bclk_oen_sel = 0x0;
 	return 0;
 }
 
