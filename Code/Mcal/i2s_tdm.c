@@ -67,7 +67,7 @@ uint32_t i2s_ext_init(void)
 	i2s_io_bypass();
 	
 #if 1
-	/* set up IO pins for I2S */
+	/* set up ETH IO pins for I2S */
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXP->bits.func_sel = IO_PAD_ETH_TXP_IIS2_LRCK;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXM->bits.func_sel = IO_PAD_ETH_TXM_IIS2_BCLK;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_RXP->bits.func_sel = IO_PAD_ETH_RXP_IIS2_DO;
@@ -89,13 +89,41 @@ uint32_t i2s_ext_init(void)
 	GPIOB->SWPORTA_DR.bits.P26 = 1;
 #endif
 
-	/* Set AIAO muxes for external I2S */
+	/* Set AIAO muxes for external I2S on ETH pins */
 	AIAO->i2s_tdm_sclk_in_sel = 0x7124;
 	AIAO->i2s_tdm_fs_in_sel = 0x7124;
 	AIAO->i2s_tdm_sdi_in_sel = 0x7664;
 	AIAO->i2s_tdm_sdo_out_sel = 0x7664;
-	/* multi-sync = 0 too - where's that? */
+	AIAO->i2s_tdm_multi_sync = 0x0;
 	AIAO->i2s_bclk_oen_sel = 0x0;
+	
+	/* I2S2 as master TX */
+	I2S_TDM_2->BLK_MODE_SETTING = I2S_TDM_BLK_MODE_SETTING_TX_MODE |
+		I2S_TDM_BLK_MODE_SETTING_MASTER_MODE;
+	// FRAME_SETTING defaults good for 16-bit stereo I2S
+	// SLOT_SETTING1,2 defaults good for 16-bit stereo I2S
+	uint32_t clk_ctrl0 = I2S_TDM_2->I2S_CLK_CTRL0;
+	I2S_TDM_2->I2S_CLK_CTRL0 = clk_ctrl0 | 0x1c0; // aud_ena, mclk ena, bclk_out_force_ena
+	
+	/* I2S1 as slave RX */
+	I2S_TDM_1->BLK_MODE_SETTING = I2S_TDM_BLK_MODE_SETTING_EXT_FS;
+	// FRAME_SETTING defaults good for 16-bit stereo I2S
+	// SLOT_SETTING1,2 defaults good for 16-bit stereo I2S
+	clk_ctrl0 = I2S_TDM_1->I2S_CLK_CTRL0;
+	I2S_TDM_1->I2S_CLK_CTRL0 = 0x100;	// aud_ena
+	
+	/* reset */
+	I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
+	I2S_TDM_1->I2S_RESET = I2S_TDM_I2S_RESET_RX;
+	delayus(10);
+	I2S_TDM_2->I2S_RESET = 0;
+	I2S_TDM_1->I2S_RESET = 0;
+	
+	/* enable slave first to keep in sync */
+	I2S_TDM_1->I2S_ENABLE = 1;
+	I2S_TDM_2->I2S_ENABLE = 1;
+
+
 	return 0;
 }
 

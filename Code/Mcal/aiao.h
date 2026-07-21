@@ -33,11 +33,14 @@ typedef struct {
 	volatile uint32_t i2s_tdm_fs_in_sel;	/* 0x004: Select the source of TX/RX module’s frame synchronizing signal in slave mode.*/
 	volatile uint32_t i2s_tdm_sdi_in_sel;	/* 0x008: Select the source of RX module’s SDI signal. */
 	volatile uint32_t i2s_tdm_sdo_out_sel;	/* 0x00c: Select the source of subsystem’s SDO output. */
-	uint32_t RESERVED_0[8];					/* 0x010 - 0x02c */
+	uint32_t RESERVED_0[4];					/* 0x010 - 0x01c */
+	volatile uint32_t i2s_tdm_multi_sync;	/* 0x020: Undocumented. */
+	uint32_t RESERVED_1[3];					/* 0x024 - 0x02c */
 	volatile uint32_t i2s_bclk_oen_sel;		/* 0x030: The output control of BCLK IO. */
-	uint32_t RESERVED_1[3];					/* 0x034 - 0x03c */
+	volatile uint32_t i2s_bclk_out_ctrl;	/* 0x034: Undocumented. */
+	uint32_t RESERVED_2[2];					/* 0x038 - 0x03c */
 	volatile uint32_t audio_pdm_ctrl;		/* 0x040: Enable PDM mode. */
-	uint32_t RESERVED_2[7];					/* 0x044 - 0x05c */
+	uint32_t RESERVED_3[7];					/* 0x044 - 0x05c */
 	volatile uint32_t i2s_sys_int_en;		/* 0x060: */
 	volatile uint32_t i2s_sys_ints;			/* 0x064: */
 } AIAO_TypeDef;

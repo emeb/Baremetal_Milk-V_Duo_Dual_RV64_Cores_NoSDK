@@ -57,10 +57,10 @@ typedef struct {
 } I2S_TDM_TypeDef;
 
 /* Peripheral Base Definitions */
-#define I2S_TDM_0_BASE    (0x0x04100000ull)
-#define I2S_TDM_1_BASE    (0x0x04110000ull)
-#define I2S_TDM_2_BASE    (0x0x04120000ull)
-#define I2S_TDM_3_BASE    (0x0x04130000ull)
+#define I2S_TDM_0_BASE    (0x04100000ull)
+#define I2S_TDM_1_BASE    (0x04110000ull)
+#define I2S_TDM_2_BASE    (0x04120000ull)
+#define I2S_TDM_3_BASE    (0x04130000ull)
 
 /* Instance Pointers */
 #define I2S_TDM_0    ((I2S_TDM_TypeDef *)I2S_TDM_0_BASE)
@@ -107,8 +107,8 @@ typedef struct {
 #define I2S_TDM_BLK_RX_FIFO_DMA_CLK_FORCE_EN		(1<<9)
 #define I2S_TDM_BLK_TX_BLK_CLK_FORCE_EN				(1<<16)
 #define I2S_TDM_BLK_TX_FIFO_DMA_CLK_FORCE_EN		(1<<17)
-#define I2S_TDM_I2S_RESET_TX						(1)
-#define I2S_TDM_I2S_RESET_RX						(2)
+#define I2S_TDM_I2S_RESET_RX						(1)
+#define I2S_TDM_I2S_RESET_TX						(1<<1)
 /* more to come... */
 
 void i2s_io_bypass(void);
