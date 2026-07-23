@@ -109,11 +109,12 @@ typedef struct {
 #define I2S_TDM_BLK_TX_FIFO_DMA_CLK_FORCE_EN		(1<<17)
 #define I2S_TDM_I2S_RESET_RX						(1)
 #define I2S_TDM_I2S_RESET_TX						(1<<1)
+#define I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT			(1<<4)
 /* more to come... */
 
 void i2s_io_bypass(void);
 uint32_t i2s_ext_init(void);
-void i2s_ext_tx(void);
+void i2s_ext_tx(int16_t data);
 
 
 #ifdef __cplusplus

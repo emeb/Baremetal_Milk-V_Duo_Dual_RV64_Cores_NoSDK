@@ -19,6 +19,7 @@
 // Includes
 //-----------------------------------------------------------------------------------------
 #include <stdint.h>
+#include <math.h>
 #include "riscv-csr.h"
 #include "pinmux.h"
 #include "gpio.h"
@@ -150,6 +151,16 @@ int main(void)
 	{
 		printf("I2S Ext initialized\n\r");
 	}
+	
+	/* generate some audio data */
+	int16_t i2s_buffer[128], i2s_ptr = 0;
+	double ph = 0.0;
+	for(int i=0;i<128;i+=2)
+	{
+		i2s_buffer[i] = (int16_t)floor(32767.0 * sin(ph)+0.5);
+		i2s_buffer[i+1] = (int16_t)floor(32767.0 * cos(ph)+0.5);
+		ph += 6.2832/64.0;
+	}
 #endif
 
 	/* start the second core*/
@@ -162,7 +173,7 @@ int main(void)
 	while(1)
 	{
 		// send char
-		uart_tx(HW_UART, '+');
+		//uart_tx(HW_UART, '+');
 		
 #if 0
 		// send SPI data w/ GPIO bracket
@@ -209,10 +220,10 @@ int main(void)
 
 #if 1
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
-		i2s_ext_tx();
+		i2s_ext_tx(i2s_buffer[i2s_ptr++]);
 		GPIOA->SWPORTA_DR.bits.P26 = 0;
 #endif
-		delayms(100);
+		//delayms(100);
 	}
 
   return 0;

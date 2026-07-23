@@ -59,7 +59,7 @@ SIZE    = $(TOOLCHAIN)-size
 READELF = $(TOOLCHAIN)-readelf
 
 ARCH = -mcpu=c906fd              \
-       -mabi=lp64f               \
+       -mabi=lp64d               \
        -mcmodel=medany           \
        -msmall-data-limit=0      \
        -falign-functions=8       \
@@ -111,7 +111,7 @@ COPS  = $(OPT)                                        \
         -Wextra                                       \
         -fomit-frame-pointer                          \
         -gdwarf-2                                     \
-        -fno-exceptions
+        -fno-exceptions                               
 
 ############################################################################################
 # C++ Compiler flags
@@ -143,7 +143,7 @@ CPPOPS  = $(OPT)                                        \
           -fno-threadsafe-statics                       \
           -fno-enforce-eh-specs                         \
           -ftemplate-depth=128                          \
-          -Wzero-as-null-pointer-constant
+          -Wzero-as-null-pointer-constant               
 
 ############################################################################################
 # Assembler flags
@@ -182,7 +182,6 @@ endif
 
 ifeq ($(LD), $(TOOLCHAIN)-ld)
   LOPS = -nostartfiles                          \
-         -nostdlib                              \
          $(ARCH)                                \
          $(DEFS)                                \
          -e Startup_Init                        \
@@ -193,7 +192,6 @@ ifeq ($(LD), $(TOOLCHAIN)-ld)
          -z,max-page-size=4096                  
 else
   LOPS = -nostartfiles                          \
-         -nostdlib                              \
          -fno-lto                               \
          $(ARCH)                                \
          $(DEFS)                                \
@@ -243,7 +241,7 @@ INC_FILES := $(SRC_DIR)                        \
 VPATH := $(subst \,/,$(sort $(dir $(SRC_FILES)) $(OBJ_DIR)))
 FILES_O := $(addprefix $(OBJ_DIR)/, $(notdir $(addsuffix .o, $(basename $(SRC_FILES)))))
 
-LIB = 
+LIB = -lm
 
 ifeq ($(MAKECMDGOALS), BUILD_STAGE_2)
 -include $(subst .o,.d,$(FILES_O))

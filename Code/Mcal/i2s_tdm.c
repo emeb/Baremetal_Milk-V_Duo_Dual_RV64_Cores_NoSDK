@@ -134,9 +134,9 @@ uint32_t i2s_ext_init(void)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-void i2s_ext_tx(void)
+void i2s_ext_tx(int16_t data)
 {
-#if 1
+#if 0
 	/* GPIO test */
 	static uint32_t count = 0;
 	
@@ -146,6 +146,19 @@ void i2s_ext_tx(void)
 	GPIOB->SWPORTA_DR.bits.P26 = (count >> 3) & 1;
 	
 	count++;
+#else
+	/* wait for fifo available */
+	while(!(I2S_TDM_2->I2S_INT &I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT))
+	{
+		__asm(""::: "memory");
+	}
+	
+	/* send data */
+	I2S_TDM_2->TX_WR_PORT = (uint32_t)data;
+	__asm(""::: "memory");
+
+	/* clear int */
+	I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT;
 #endif
 }
 
