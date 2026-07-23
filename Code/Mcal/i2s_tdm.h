@@ -114,7 +114,7 @@ typedef struct {
 
 void i2s_io_bypass(void);
 uint32_t i2s_ext_init(void);
-void i2s_ext_tx(int16_t data);
+uint32_t i2s_ext_tx(int16_t data);
 
 
 #ifdef __cplusplus

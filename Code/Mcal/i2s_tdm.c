@@ -89,6 +89,8 @@ uint32_t i2s_ext_init(void)
 	GPIOB->SWPORTA_DR.bits.P26 = 1;
 #endif
 
+	/* set up clock */
+
 	/* Set AIAO muxes for external I2S on ETH pins */
 	AIAO->i2s_tdm_sclk_in_sel = 0x7124;
 	AIAO->i2s_tdm_fs_in_sel = 0x7124;
@@ -134,7 +136,7 @@ uint32_t i2s_ext_init(void)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-void i2s_ext_tx(int16_t data)
+uint32_t i2s_ext_tx(int16_t data)
 {
 #if 0
 	/* GPIO test */
@@ -148,9 +150,13 @@ void i2s_ext_tx(int16_t data)
 	count++;
 #else
 	/* wait for fifo available */
+	uint32_t timeout = 10000;
 	while(!(I2S_TDM_2->I2S_INT &I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT))
 	{
 		__asm(""::: "memory");
+		
+		if(timeout-- == 0)
+			return 1;
 	}
 	
 	/* send data */
@@ -160,5 +166,25 @@ void i2s_ext_tx(int16_t data)
 	/* clear int */
 	I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT;
 #endif
+	
+	return 0;
 }
 
+/************************************************************
+apll stuff...
+
+g2_ctrl = 0x00000000	- [4] = 0 powered up
+g2_stat = 0x001F0000	- [17]= 1 locked
+apll0_csr = 0x00128201	- [6:0] = 0x01 pre_div
+						- [14:8] = 0x02 post_div
+						- [16:15] = 0b01 mode
+						- [23:17] = 0x10 div_sel
+						- [26:24] = 0x1 ictrl
+apll_ssc_syn_ctrl = 0x00000000 - default
+apll_ssc_syn_set = 0x00000000 - default
+apll_frac_div_ctrl = 0x00000000 - default (a24m clk src disabled)
+apll_frac_div_m = 0x00000000 - default
+apll_frac_div_n = 0x00000000 - default
+a0pll_clk_csr = 0x00001E1A - power down bits for various dividers. div3 different from default
+
+*************************************************************/
