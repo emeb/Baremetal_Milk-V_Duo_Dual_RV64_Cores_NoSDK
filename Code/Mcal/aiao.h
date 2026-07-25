@@ -43,6 +43,22 @@ typedef struct {
 	uint32_t RESERVED_3[7];					/* 0x044 - 0x05c */
 	volatile uint32_t i2s_sys_int_en;		/* 0x060: */
 	volatile uint32_t i2s_sys_ints;			/* 0x064: */
+	uint32_t RESERVED_4[2];					/* 0x068 - 0x06c */
+	volatile uint32_t sys_clk_ctrl;			/* 0x070: Undocumented. */
+	uint32_t RESERVED_5[3];					/* 0x074 - 0x07c */
+	volatile uint32_t i2s0_master_clk_ctrl0;/* 0x080: Undocumented. */
+	volatile uint32_t i2s0_master_clk_ctrl1;/* 0x084: Undocumented. */
+	uint32_t RESERVED_6[2];					/* 0x088 - 0x08c */
+	volatile uint32_t i2s1_master_clk_ctrl0;/* 0x090: Undocumented. */
+	volatile uint32_t i2s1_master_clk_ctrl1;/* 0x094: Undocumented. */
+	uint32_t RESERVED_7[2];					/* 0x098 - 0x09c */
+	volatile uint32_t i2s2_master_clk_ctrl0;/* 0x0a0: Undocumented. */
+	volatile uint32_t i2s2_master_clk_ctrl1;/* 0x0a4: Undocumented. */
+	uint32_t RESERVED_8[2];					/* 0x0a8 - 0x0ac */
+	volatile uint32_t i2s3_master_clk_ctrl0;/* 0x0b0: Undocumented. */
+	volatile uint32_t i2s3_master_clk_ctrl1;/* 0x0b4: Undocumented. */
+	uint32_t RESERVED_9[2];					/* 0x0b8 - 0x0bc */
+	volatile uint32_t sys_lrck_ctrl;		/* 0x0c0: Undocumented. */
 } AIAO_TypeDef;
 
 /* Peripheral Base Definitions */
