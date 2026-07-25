@@ -1,0 +1,78 @@
+baremetal
+
+PLL G2 ------------------------------------------
+g2_ctrl = 0x00000000
+g2_stat = 0x001F0000
+apll0_csr = 0x00128201
+apll_ssc_syn_ctrl = 0x00000000
+apll_ssc_syn_set = 0x00000000
+apll_frac_div_ctrl = 0x00000000
+apll_frac_div_m = 0x00000000
+apll_frac_div_n = 0x00000000
+a0pll_clk_csr = 0x00001E1A
+CLKGEN ------------------------------------------
+clk_en_1 = 0xFFFFFFFF
+clk_byp_0 = 0x00000000
+div_clk_sdma_aud0 = 0x00120009
+div_clk_sdma_aud1 = 0x00000001
+div_clk_sdma_aud2 = 0x00000001
+div_clk_sdma_aud3 = 0x00000001
+AIAO --------------------------------------------
+i2s_tdm_sclk_in_sel = 0x00007124
+i2s_tdm_fs_in_sel = 0x00007124
+i2s_tdm_sdi_in_sel = 0x00007664
+i2s_tdm_sdo_out_sel = 0x00007664
+i2s_tdm_multi_sync = 0x00000000
+i2s_bclk_oen_sel = 0x00000000
+i2s_bclk_out_ctrl = 0x00000000
+sys_clk_ctrl = 0x00000000
+i2s0_master_clk_ctrl0 = 0x00000040
+i2s0_master_clk_ctrl1 = 0x00020002
+i2s1_master_clk_ctrl0 = 0x00000040
+i2s1_master_clk_ctrl1 = 0x00020002
+i2s2_master_clk_ctrl0 = 0x00000040
+i2s2_master_clk_ctrl1 = 0x00020002
+i2s3_master_clk_ctrl0 = 0x00000040
+i2s3_master_clk_ctrl1 = 0x00020002
+sys_lrck_ctrl = 0x00000000
+I2S_TDM_2 ---------------------------------------
+BLK_MODE_SETTING = 0xFF00000B
+FRAME_SETTING = 0x000F201F
+SLOT_SETTING1 = 0x000F0F01
+SLOT_SETTING2 = 0x00000003
+DATA_FORMAT = 0x00000002
+BLK_CFG = 0x00320202
+I2S_ENABLE = 0x00000001
+I2S_RESET = 0x00000000
+I2S_INT_EN = 0x00000166
+I2S_INT = 0x00001000
+FIFO_THRESHOLD = 0x1F070007
+I2S_LRCK_MASTER = 0x00000000
+FIFO_RESET = 0x00000000
+RX_STATUS = 0x00000000
+TX_STATUS = 0x60000000
+I2S_CLK_CTRL0 = 0x00000100
+I2S_CLK_CTRL1 = 0x00080002
+I2S_PCM_SYNTH = 0x00400001
+I2S_TDM_1 ---------------------------------------
+BLK_MODE_SETTING = 0xFF000008
+FRAME_SETTING = 0x000F201F
+SLOT_SETTING1 = 0x000F0F01
+SLOT_SETTING2 = 0x00000003
+DATA_FORMAT = 0x00000002
+BLK_CFG = 0x00320202
+I2S_ENABLE = 0x00000001
+I2S_RESET = 0x00000000
+I2S_INT_EN = 0x00000166
+I2S_INT = 0x00000000
+FIFO_THRESHOLD = 0x1F070007
+I2S_LRCK_MASTER = 0x00000001
+FIFO_RESET = 0x00000000
+RX_STATUS = 0x60000000
+TX_STATUS = 0x00000000
+I2S_CLK_CTRL0 = 0x000001C0
+I2S_CLK_CTRL1 = 0x00080002
+I2S_PCM_SYNTH = 0x00400001
+
+
+

@@ -30,6 +30,7 @@
 #include "clkgen.h"
 #include "i2c.h"
 #include "saradc.h"
+#include "aiao.h"
 #include "i2s_tdm.h"
 #include "delay.h"
 
@@ -153,6 +154,7 @@ int main(void)
 	}
 	
 	/* check clocking for I2S */
+	printf("PLL G2 ------------------------------------------\n\r");
 	printf("g2_ctrl = 0x%08X\n\r", PLL_G2->pll_g2_ctrl);
 	printf("g2_stat = 0x%08X\n\r", PLL_G2->pll_g2_status);
 	printf("apll0_csr = 0x%08X\n\r", PLL_G2->apll0_csr);
@@ -163,15 +165,89 @@ int main(void)
 	printf("apll_frac_div_n = 0x%08X\n\r", PLL_G2->apll_frac_div_n);
 	printf("a0pll_clk_csr = 0x%08X\n\r", PLL_G2->a0pll_clk_csr);
 	
+	printf("CLKGEN ------------------------------------------\n\r");
+	printf("clk_en_1 = 0x%08X\n\r", CLKGEN->clk_en_1);
+	printf("clk_byp_0 = 0x%08X\n\r", CLKGEN->clk_byp_0);
+	printf("div_clk_sdma_aud0 = 0x%08X\n\r", CLKGEN->div_clk_sdma_aud0);
+	printf("div_clk_sdma_aud1 = 0x%08X\n\r", CLKGEN->div_clk_sdma_aud1);
+	printf("div_clk_sdma_aud2 = 0x%08X\n\r", CLKGEN->div_clk_sdma_aud2);
+	printf("div_clk_sdma_aud3 = 0x%08X\n\r", CLKGEN->div_clk_sdma_aud3);
+
+	printf("AIAO --------------------------------------------\n\r");
+	printf("i2s_tdm_sclk_in_sel = 0x%08X\n\r", AIAO->i2s_tdm_sclk_in_sel);
+	printf("i2s_tdm_fs_in_sel = 0x%08X\n\r", AIAO->i2s_tdm_fs_in_sel);
+	printf("i2s_tdm_sdi_in_sel = 0x%08X\n\r", AIAO->i2s_tdm_sdi_in_sel);
+	printf("i2s_tdm_sdo_out_sel = 0x%08X\n\r", AIAO->i2s_tdm_sdo_out_sel);
+	printf("i2s_tdm_multi_sync = 0x%08X\n\r", AIAO->i2s_tdm_multi_sync);
+	printf("i2s_bclk_oen_sel = 0x%08X\n\r", AIAO->i2s_bclk_oen_sel);
+	printf("i2s_bclk_out_ctrl = 0x%08X\n\r", AIAO->i2s_bclk_out_ctrl);
+	printf("sys_clk_ctrl = 0x%08X\n\r", AIAO->sys_clk_ctrl);
+	printf("i2s0_master_clk_ctrl0 = 0x%08X\n\r", AIAO->i2s0_master_clk_ctrl0);
+	printf("i2s0_master_clk_ctrl1 = 0x%08X\n\r", AIAO->i2s0_master_clk_ctrl1);
+	printf("i2s1_master_clk_ctrl0 = 0x%08X\n\r", AIAO->i2s1_master_clk_ctrl0);
+	printf("i2s1_master_clk_ctrl1 = 0x%08X\n\r", AIAO->i2s1_master_clk_ctrl1);
+	printf("i2s2_master_clk_ctrl0 = 0x%08X\n\r", AIAO->i2s2_master_clk_ctrl0);
+	printf("i2s2_master_clk_ctrl1 = 0x%08X\n\r", AIAO->i2s2_master_clk_ctrl1);
+	printf("i2s3_master_clk_ctrl0 = 0x%08X\n\r", AIAO->i2s3_master_clk_ctrl0);
+	printf("i2s3_master_clk_ctrl1 = 0x%08X\n\r", AIAO->i2s3_master_clk_ctrl1);
+	printf("sys_lrck_ctrl = 0x%08X\n\r", AIAO->sys_lrck_ctrl);
+
+	printf("I2S_TDM_2 ---------------------------------------\n\r");
+	printf("BLK_MODE_SETTING = 0x%08X\n\r", I2S_TDM_2->BLK_MODE_SETTING);
+	printf("FRAME_SETTING = 0x%08X\n\r", I2S_TDM_2->FRAME_SETTING);
+	printf("SLOT_SETTING1 = 0x%08X\n\r", I2S_TDM_2->SLOT_SETTING1);
+	printf("SLOT_SETTING2 = 0x%08X\n\r", I2S_TDM_2->SLOT_SETTING2);
+	printf("DATA_FORMAT = 0x%08X\n\r", I2S_TDM_2->DATA_FORMAT);
+	printf("BLK_CFG = 0x%08X\n\r", I2S_TDM_2->BLK_CFG);
+	printf("I2S_ENABLE = 0x%08X\n\r", I2S_TDM_2->I2S_ENABLE);
+	printf("I2S_RESET = 0x%08X\n\r", I2S_TDM_2->I2S_RESET);
+	printf("I2S_INT_EN = 0x%08X\n\r", I2S_TDM_2->I2S_INT_EN);
+	printf("I2S_INT = 0x%08X\n\r", I2S_TDM_2->I2S_INT);
+	printf("FIFO_THRESHOLD = 0x%08X\n\r", I2S_TDM_2->FIFO_THRESHOLD);
+	printf("I2S_LRCK_MASTER = 0x%08X\n\r", I2S_TDM_2->I2S_LRCK_MASTER);
+	printf("FIFO_RESET = 0x%08X\n\r", I2S_TDM_2->FIFO_RESET);
+	printf("RX_STATUS = 0x%08X\n\r", I2S_TDM_2->RX_STATUS);
+	printf("TX_STATUS = 0x%08X\n\r", I2S_TDM_2->TX_STATUS);
+	printf("I2S_CLK_CTRL0 = 0x%08X\n\r", I2S_TDM_2->I2S_CLK_CTRL0);
+	printf("I2S_CLK_CTRL1 = 0x%08X\n\r", I2S_TDM_2->I2S_CLK_CTRL1);
+	printf("I2S_PCM_SYNTH = 0x%08X\n\r", I2S_TDM_2->I2S_PCM_SYNTH);
+	
+	printf("I2S_TDM_1 ---------------------------------------\n\r");
+	printf("BLK_MODE_SETTING = 0x%08X\n\r", I2S_TDM_1->BLK_MODE_SETTING);
+	printf("FRAME_SETTING = 0x%08X\n\r", I2S_TDM_1->FRAME_SETTING);
+	printf("SLOT_SETTING1 = 0x%08X\n\r", I2S_TDM_1->SLOT_SETTING1);
+	printf("SLOT_SETTING2 = 0x%08X\n\r", I2S_TDM_1->SLOT_SETTING2);
+	printf("DATA_FORMAT = 0x%08X\n\r", I2S_TDM_1->DATA_FORMAT);
+	printf("BLK_CFG = 0x%08X\n\r", I2S_TDM_1->BLK_CFG);
+	printf("I2S_ENABLE = 0x%08X\n\r", I2S_TDM_1->I2S_ENABLE);
+	printf("I2S_RESET = 0x%08X\n\r", I2S_TDM_1->I2S_RESET);
+	printf("I2S_INT_EN = 0x%08X\n\r", I2S_TDM_1->I2S_INT_EN);
+	printf("I2S_INT = 0x%08X\n\r", I2S_TDM_1->I2S_INT);
+	printf("FIFO_THRESHOLD = 0x%08X\n\r", I2S_TDM_1->FIFO_THRESHOLD);
+	printf("I2S_LRCK_MASTER = 0x%08X\n\r", I2S_TDM_1->I2S_LRCK_MASTER);
+	printf("FIFO_RESET = 0x%08X\n\r", I2S_TDM_1->FIFO_RESET);
+	printf("RX_STATUS = 0x%08X\n\r", I2S_TDM_1->RX_STATUS);
+	printf("TX_STATUS = 0x%08X\n\r", I2S_TDM_1->TX_STATUS);
+	printf("I2S_CLK_CTRL0 = 0x%08X\n\r", I2S_TDM_1->I2S_CLK_CTRL0);
+	printf("I2S_CLK_CTRL1 = 0x%08X\n\r", I2S_TDM_1->I2S_CLK_CTRL1);
+	printf("I2S_PCM_SYNTH = 0x%08X\n\r", I2S_TDM_1->I2S_PCM_SYNTH);
+	
+	printf("Check offsets:    I2S_TDM_2 = 0x%08X\n\r", I2S_TDM_2);
+	printf("I2S_TDM_2->BLK_MODE_SETTING = 0x%08X\n\r", &(I2S_TDM_2->BLK_MODE_SETTING));
+	printf("      I2S_TDM_2->FIFO_RESET = 0x%08X\n\r", &(I2S_TDM_2->FIFO_RESET));
+	printf("       I2S_TDM_2->RX_STATUS = 0x%08X\n\r", &(I2S_TDM_2->RX_STATUS));
+	printf("       I2S_TDM_2->TX_STATUS = 0x%08X\n\r", &(I2S_TDM_2->TX_STATUS));
+	printf("   I2S_TDM_2->I2S_CLK_CTRL0 = 0x%08X\n\r", &(I2S_TDM_2->I2S_CLK_CTRL0));
+	printf("      I2S_TDM_2->RX_RD_PORT = 0x%08X\n\r", &(I2S_TDM_2->RX_RD_PORT));
+	printf("      I2S_TDM_2->TX_WR_PORT = 0x%08X\n\r", &(I2S_TDM_2->TX_WR_PORT));
+		
 	/* generate some audio data */
 	int16_t i2s_buffer[128], i2s_ptr = 0;
-//	double ph = 0.0;
-//	for(int i=0;i<128;i+=2)
-//	{
-//		i2s_buffer[i] = (int16_t)floor(32767.0 * sin(ph)+0.5);
-//		i2s_buffer[i+1] = (int16_t)floor(32767.0 * cos(ph)+0.5);
-//		ph += 6.2832/64.0;
-//	}
+	for(int i=0;i<128;i+=2)
+	{
+		i2s_buffer[i] = (int16_t)(i<<9);
+		i2s_buffer[i+1] = (int16_t)(-i<<9);
+	}
 #endif
 
 	/* start the second core*/
@@ -184,7 +260,7 @@ int main(void)
 	while(1)
 	{
 		// send char
-		uart_tx(HW_UART, '+');
+		//uart_tx(HW_UART, '+');
 		
 #if 0
 		// send SPI data w/ GPIO bracket
@@ -229,7 +305,7 @@ int main(void)
 		printf("\n\r");
 #endif
 
-#if 0
+#if 1
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
 		__asm(""::: "memory");
 		uint32_t status;
@@ -238,7 +314,7 @@ int main(void)
 		GPIOA->SWPORTA_DR.bits.P26 = 0;
 		__asm(""::: "memory");
 #endif
-		delayms(100);
+		//delayms(100);
 	}
 
   return 0;

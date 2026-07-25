@@ -99,20 +99,28 @@ uint32_t i2s_ext_init(void)
 	AIAO->i2s_tdm_multi_sync = 0x0;
 	AIAO->i2s_bclk_oen_sel = 0x0;
 	
+	uint32_t temp;
+	
 	/* I2S2 as master TX */
-	I2S_TDM_2->BLK_MODE_SETTING = I2S_TDM_BLK_MODE_SETTING_TX_MODE |
-		I2S_TDM_BLK_MODE_SETTING_MASTER_MODE;
-	// FRAME_SETTING defaults good for 16-bit stereo I2S
+	I2S_TDM_2->BLK_MODE_SETTING = I2S_TDM_BLK_MODE_SETTING_TX_SAMPLE_EDGE_POS |
+		I2S_TDM_BLK_MODE_SETTING_TX_MODE |
+		I2S_TDM_BLK_MODE_SETTING_MASTER_MODE |
+		0xFF000000;	// this is undoc from the linux drv
+	temp = I2S_TDM_2->FRAME_SETTING;
+	I2S_TDM_2->FRAME_SETTING = temp & ~I2S_TDM_FRAME_SETTING_FS_IDEF_LRCK;
 	// SLOT_SETTING1,2 defaults good for 16-bit stereo I2S
-	uint32_t clk_ctrl0 = I2S_TDM_2->I2S_CLK_CTRL0;
-	I2S_TDM_2->I2S_CLK_CTRL0 = clk_ctrl0 | 0x1c0; // aud_ena, mclk ena, bclk_out_force_ena
+	I2S_TDM_2->I2S_CLK_CTRL0 = 0x100; // aud_ena
+	I2S_TDM_2->I2S_CLK_CTRL1 = 0x00080002;	// bclk_div 8, mclk_div 2
 	
 	/* I2S1 as slave RX */
-	I2S_TDM_1->BLK_MODE_SETTING = I2S_TDM_BLK_MODE_SETTING_EXT_FS;
-	// FRAME_SETTING defaults good for 16-bit stereo I2S
+	I2S_TDM_1->BLK_MODE_SETTING = I2S_TDM_BLK_MODE_SETTING_TX_SAMPLE_EDGE_POS |
+		0xFF000000;	// this is undoc from the linux drv
+	temp = I2S_TDM_1->FRAME_SETTING;
+	I2S_TDM_1->FRAME_SETTING = temp & ~I2S_TDM_FRAME_SETTING_FS_IDEF_LRCK;
 	// SLOT_SETTING1,2 defaults good for 16-bit stereo I2S
-	clk_ctrl0 = I2S_TDM_1->I2S_CLK_CTRL0;
-	I2S_TDM_1->I2S_CLK_CTRL0 = 0x100;	// aud_ena
+	I2S_TDM_1->I2S_CLK_CTRL0 = 0x1c0;	// aud_ena, mclk ena, bclk_out_force_ena
+	I2S_TDM_1->I2S_CLK_CTRL1 = 0x00080002;	// bclk_div 8, mclk_div 2
+	I2S_TDM_1->I2S_LRCK_MASTER = 1;
 	
 	/* reset */
 	I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
@@ -150,8 +158,8 @@ uint32_t i2s_ext_tx(int16_t data)
 	count++;
 #else
 	/* wait for fifo available */
-	uint32_t timeout = 10000;
-	while(!(I2S_TDM_2->I2S_INT &I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT))
+	uint32_t timeout = 10000;	// i0k about 35us - 48kHz is ~20us
+	while(!(I2S_TDM_2->I2S_INT & I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW))
 	{
 		__asm(""::: "memory");
 		
@@ -162,9 +170,10 @@ uint32_t i2s_ext_tx(int16_t data)
 	/* send data */
 	I2S_TDM_2->TX_WR_PORT = (uint32_t)data;
 	__asm(""::: "memory");
-
-	/* clear int */
-	I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT;
+	
+	/* clear int  - doesn't work! Seems to prevent further avail */
+	//I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW;
+	//__asm(""::: "memory");
 #endif
 	
 	return 0;
