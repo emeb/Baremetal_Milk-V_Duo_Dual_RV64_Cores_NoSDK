@@ -144,7 +144,7 @@ uint32_t i2s_ext_init(void)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-uint32_t i2s_ext_tx(int16_t data)
+uint32_t i2s_ext_tx(uint32_t data)
 {
 #if 0
 	/* GPIO test */
@@ -159,19 +159,22 @@ uint32_t i2s_ext_tx(int16_t data)
 #else
 	/* wait for fifo available */
 	uint32_t timeout = 10000;	// i0k about 35us - 48kHz is ~20us
-	while(!(I2S_TDM_2->I2S_INT & I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW))
+	uint32_t i2s_int = I2S_TDM_2->I2S_INT;
+	__asm(""::: "memory");
+	while(!(i2s_int & I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW))
 	{
-		__asm(""::: "memory");
-		
 		if(timeout-- == 0)
-			return 1;
+			return i2s_int | 0x80000000;
+		
+		i2s_int = I2S_TDM_2->I2S_INT;
+		__asm(""::: "memory");
 	}
 	
 	/* send data */
-	I2S_TDM_2->TX_WR_PORT = (uint32_t)data;
+	I2S_TDM_2->TX_WR_PORT = data;
 	__asm(""::: "memory");
 	
-	/* clear int  - doesn't work! Seems to prevent further avail */
+	/* clear int - doesn't work! Seems to prevent further avail */
 	//I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW;
 	//__asm(""::: "memory");
 #endif

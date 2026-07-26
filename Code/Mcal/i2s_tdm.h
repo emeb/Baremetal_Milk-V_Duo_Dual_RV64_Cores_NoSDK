@@ -51,9 +51,11 @@ typedef struct {
 	volatile uint32_t I2S_CLK_CTRL1;	/* 0x064: Clock divider */
 	volatile uint32_t I2S_PCM_SYNTH;	/* 0x068: PCM FS synthesis mode*/
 	uint32_t RESERVED_3[5];				/* 0x06c - 0x07c */
-	volatile uint32_t RX_RD_PORT;		/* 0x080: RX FIFO read port */
-	uint32_t RESERVED_4[15];			/* 0x084 - 0x0bc */
-	volatile uint32_t TX_WR_PORT;		/* 0x0c0: TX FIFO write port */
+	volatile uint32_t RX_RD_PORT;		/* 0x080: RX FIFO read port 0 */
+	volatile uint32_t RX_RD_PORT_1;		/* 0x080: RX FIFO read port 1 */
+	uint32_t RESERVED_4[14];			/* 0x084 - 0x0bc */
+	volatile uint32_t TX_WR_PORT;		/* 0x0c0: TX FIFO write port 0 */
+	volatile uint32_t TX_WR_PORT_1;		/* 0x0c4: TX FIFO write port 1 */
 } I2S_TDM_TypeDef;
 
 /* Peripheral Base Definitions */
@@ -115,7 +117,7 @@ typedef struct {
 
 void i2s_io_bypass(void);
 uint32_t i2s_ext_init(void);
-uint32_t i2s_ext_tx(int16_t data);
+uint32_t i2s_ext_tx(uint32_t data);
 
 
 #ifdef __cplusplus

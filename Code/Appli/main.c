@@ -142,7 +142,20 @@ int main(void)
 	}
 #endif
 
+	/* start the second core*/
+	core_start_core1();
+
+	/* configure the timer */
+	core_set_timer_timeout(TIMEOUT_250MS);
+
 #if 1
+	/* generate some audio data */
+	uint32_t i2s_buffer[128], i2s_ptr = 0;
+	for(uint32_t i=0;i<128;i++)
+	{
+		i2s_buffer[i] = ((i<<9)&0xFFFF) | ((((128-i)<<9)&0xFFFF)<<16);
+	}
+
 	/* start I2S external */
 	if(i2s_ext_init())
 	{
@@ -153,6 +166,7 @@ int main(void)
 		printf("I2S Ext initialized\n\r");
 	}
 	
+#if 0
 	/* check clocking for I2S */
 	printf("PLL G2 ------------------------------------------\n\r");
 	printf("g2_ctrl = 0x%08X\n\r", PLL_G2->pll_g2_ctrl);
@@ -239,22 +253,11 @@ int main(void)
 	printf("       I2S_TDM_2->TX_STATUS = 0x%08X\n\r", &(I2S_TDM_2->TX_STATUS));
 	printf("   I2S_TDM_2->I2S_CLK_CTRL0 = 0x%08X\n\r", &(I2S_TDM_2->I2S_CLK_CTRL0));
 	printf("      I2S_TDM_2->RX_RD_PORT = 0x%08X\n\r", &(I2S_TDM_2->RX_RD_PORT));
+	printf("    I2S_TDM_2->RX_RD_PORT_1 = 0x%08X\n\r", &(I2S_TDM_2->RX_RD_PORT_1));
 	printf("      I2S_TDM_2->TX_WR_PORT = 0x%08X\n\r", &(I2S_TDM_2->TX_WR_PORT));
-		
-	/* generate some audio data */
-	int16_t i2s_buffer[128], i2s_ptr = 0;
-	for(int i=0;i<128;i+=2)
-	{
-		i2s_buffer[i] = (int16_t)(i<<9);
-		i2s_buffer[i+1] = (int16_t)(-i<<9);
-	}
+	printf("    I2S_TDM_2->TX_WR_PORT_1 = 0x%08X\n\r", &(I2S_TDM_2->TX_WR_PORT_1));
+#endif		
 #endif
-
-	/* start the second core*/
-	core_start_core1();
-
-	/* configure the timer */
-	core_set_timer_timeout(TIMEOUT_250MS);
 
 	/* endless loop */
 	while(1)
@@ -309,8 +312,9 @@ int main(void)
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
 		__asm(""::: "memory");
 		uint32_t status;
-		if((status = i2s_ext_tx(i2s_buffer[i2s_ptr++])))
-			printf("%d", status);
+		if((status = i2s_ext_tx(i2s_buffer[i2s_ptr])))
+			printf("0x%08X\n\r", status);
+		i2s_ptr = (i2s_ptr + 1) & 0x7f;
 		GPIOA->SWPORTA_DR.bits.P26 = 0;
 		__asm(""::: "memory");
 #endif
