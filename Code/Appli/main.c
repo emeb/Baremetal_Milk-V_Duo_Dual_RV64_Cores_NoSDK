@@ -150,7 +150,8 @@ int main(void)
 
 #if 1
 	/* generate some audio data */
-	uint32_t i2s_buffer[128], i2s_ptr = 0;
+	uint32_t i2s_buffer[128], i2s_tx_ptr = 0, i2s_tx = 0, i2s_tx_err = 0,
+		i2s_rx = 0, i2s_rx_data, i2s_cnt = 0;
 	for(uint32_t i=0;i<128;i++)
 	{
 		i2s_buffer[i] = ((i<<9)&0xFFFF) | ((((128-i)<<9)&0xFFFF)<<16);
@@ -309,14 +310,27 @@ int main(void)
 #endif
 
 #if 1
+		/* transmit - wrapped with GPIO toggle for diag */
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
 		__asm(""::: "memory");
-		uint32_t status;
-		if((status = i2s_ext_tx(i2s_buffer[i2s_ptr])))
-			printf("0x%08X\n\r", status);
-		i2s_ptr = (i2s_ptr + 1) & 0x7f;
+		if(i2s_ext_tx(i2s_buffer[i2s_tx_ptr]))
+			i2s_tx_err++;
+		else
+			i2s_tx++;
+		i2s_tx_ptr = (i2s_tx_ptr + 1) & 0x7f;
 		GPIOA->SWPORTA_DR.bits.P26 = 0;
 		__asm(""::: "memory");
+		
+		/* receive - not actually using data yet */
+		if(i2s_ext_rx(&i2s_rx_data))
+			i2s_rx++;
+		
+		/* status */
+		if(i2s_cnt++ > 48000)
+		{
+			i2s_cnt = 0;
+			printf("%8d %8d %8d %8d\n\r", i2s_tx, i2s_tx_err, i2s_rx, i2s_tx-i2s_rx);
+		}
 #endif
 		//delayms(100);
 	}

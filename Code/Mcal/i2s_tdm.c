@@ -188,7 +188,7 @@ uint32_t i2s_ext_tx(uint32_t data)
 	I2S_TDM_2->TX_WR_PORT = data;
 	__asm(""::: "memory");
 	
-	/* clear int - doesn't work! Seems to prevent further avail */
+	/* clear int */
 	I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW;
 	__asm(""::: "memory");
 #endif
@@ -196,21 +196,30 @@ uint32_t i2s_ext_tx(uint32_t data)
 	return 0;
 }
 
-/************************************************************
-apll stuff...
-
-g2_ctrl = 0x00000000	- [4] = 0 powered up
-g2_stat = 0x001F0000	- [17]= 1 locked
-apll0_csr = 0x00128201	- [6:0] = 0x01 pre_div
-						- [14:8] = 0x02 post_div
-						- [16:15] = 0b01 mode
-						- [23:17] = 0x10 div_sel
-						- [26:24] = 0x1 ictrl
-apll_ssc_syn_ctrl = 0x00000000 - default
-apll_ssc_syn_set = 0x00000000 - default
-apll_frac_div_ctrl = 0x00000000 - default (a24m clk src disabled)
-apll_frac_div_m = 0x00000000 - default
-apll_frac_div_n = 0x00000000 - default
-a0pll_clk_csr = 0x00001E1A - power down bits for various dividers. div3 different from default
-
-*************************************************************/
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+uint32_t i2s_ext_rx(uint32_t *data)
+{
+	/* check RX FIFO */	
+	if(I2S_TDM_1->I2S_INT & I2S_TDM_I2S_INT_RX_FIFO_AVAIL_INT_RAW)
+	{
+		__asm(""::: "memory");
+		
+		/* get data */
+		*data = I2S_TDM_1->RX_RD_PORT;
+		__asm(""::: "memory");
+		
+		/* clear int */
+		I2S_TDM_1->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW;
+		__asm(""::: "memory");
+		
+		return 1;
+	}
+	
+	return 0;
+}
