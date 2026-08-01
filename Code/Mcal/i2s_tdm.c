@@ -112,6 +112,10 @@ uint32_t i2s_ext_init(void)
 	I2S_TDM_2->I2S_CLK_CTRL0 = 0x100; // aud_ena
 	I2S_TDM_2->I2S_CLK_CTRL1 = 0x00080002;	// bclk_div 8, mclk_div 2
 	
+	// default FIFO thresholds result in startup deadlock.
+	// set start level (1/2) to be less than the request threshold (3/4)
+	I2S_TDM_2->FIFO_THRESHOLD = 0x0f070007;
+
 	/* I2S1 as slave RX */
 	I2S_TDM_1->BLK_MODE_SETTING = I2S_TDM_BLK_MODE_SETTING_TX_SAMPLE_EDGE_POS |
 		0xFF000000;	// this is undoc from the linux drv
@@ -164,7 +168,17 @@ uint32_t i2s_ext_tx(uint32_t data)
 	while(!(i2s_int & I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW))
 	{
 		if(timeout-- == 0)
+		{
+			I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
+			__asm(""::: "memory");
+			
+			delayus(10);
+			
+			I2S_TDM_2->I2S_RESET = 0;
+			__asm(""::: "memory");
+			
 			return i2s_int | 0x80000000;
+		}
 		
 		i2s_int = I2S_TDM_2->I2S_INT;
 		__asm(""::: "memory");
@@ -175,8 +189,8 @@ uint32_t i2s_ext_tx(uint32_t data)
 	__asm(""::: "memory");
 	
 	/* clear int - doesn't work! Seems to prevent further avail */
-	//I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW;
-	//__asm(""::: "memory");
+	I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW;
+	__asm(""::: "memory");
 #endif
 	
 	return 0;
