@@ -9,7 +9,7 @@
  
   Owner       : emeb
   
-  Date        : 04.12.2026
+  Date        : 12.07.2026
   
   Description : I2C peripheral header file
   

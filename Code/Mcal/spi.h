@@ -9,7 +9,7 @@
  
   Owner       : emeb
   
-  Date        : 04.10.2026
+  Date        : 10.07.2026
   
   Description : SPI peripheral header file
   

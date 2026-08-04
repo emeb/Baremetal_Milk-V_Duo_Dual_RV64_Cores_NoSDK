@@ -9,7 +9,7 @@
  
   Owner       : emeb
   
-  Date        : 04.16.2026
+  Date        : 16.07.2026
   
   Description : SARADC peripheral header file
   
