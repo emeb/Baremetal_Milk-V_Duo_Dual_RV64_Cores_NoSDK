@@ -18,8 +18,12 @@
 #include "aiao.h"
 #include "gpio.h"
 #include "pinmux.h"
+#include "plic.h"
 #include "printf.h"
 #include "delay.h"
+
+void i2s_io_bypass(void);
+void i2s_ext_common_init(void);
 
 /*
  * disable ethernet on ETH pins to allow I2S or GPIO 
@@ -61,33 +65,17 @@ void i2s_io_bypass(void)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-uint32_t i2s_ext_init(void)
+void i2s_ext_common_init(void)
 {
 	/* bypass ethernet PHY */
 	i2s_io_bypass();
 	
-#if 1
 	/* set up ETH IO pins for I2S */
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXP->bits.func_sel = IO_PAD_ETH_TXP_IIS2_LRCK;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXM->bits.func_sel = IO_PAD_ETH_TXM_IIS2_BCLK;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_RXP->bits.func_sel = IO_PAD_ETH_RXP_IIS2_DO;
 	FMUX_GPIO_REG_IOCTRL_PAD_ETH_RXM->bits.func_sel = IO_PAD_ETH_RXM_IIS2_DI;
 	FMUX_GPIO_REG_IOCTRL_AUX0->bits.func_sel = IO_AUX0_IIS1_MCLK;
-#else
-	/* set up IO pins for GPIO to test */
-	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXP->bits.func_sel = IO_PAD_ETH_TXP_XGPIOB_25;
-	GPIOB->SWPORTA_DDR.bits.P25 = 1;
-	GPIOB->SWPORTA_DR.bits.P25 = 1;
-	FMUX_GPIO_REG_IOCTRL_PAD_ETH_TXM->bits.func_sel = IO_PAD_ETH_TXM_XGPIOB_24;
-	GPIOB->SWPORTA_DDR.bits.P24 = 1;
-	GPIOB->SWPORTA_DR.bits.P24 = 1;
-	FMUX_GPIO_REG_IOCTRL_PAD_ETH_RXP->bits.func_sel = IO_PAD_ETH_RXP_XGPIOB_27;
-	GPIOB->SWPORTA_DDR.bits.P27 = 1;
-	GPIOB->SWPORTA_DR.bits.P27 = 1;
-	FMUX_GPIO_REG_IOCTRL_PAD_ETH_RXM->bits.func_sel = IO_PAD_ETH_RXM_XGPIOB_26;
-	GPIOB->SWPORTA_DDR.bits.P26 = 1;
-	GPIOB->SWPORTA_DR.bits.P26 = 1;
-#endif
 
 	/* set up clock */
 
@@ -125,6 +113,19 @@ uint32_t i2s_ext_init(void)
 	I2S_TDM_1->I2S_CLK_CTRL0 = 0x1c0;	// aud_ena, mclk ena, bclk_out_force_ena
 	I2S_TDM_1->I2S_CLK_CTRL1 = 0x00080002;	// bclk_div 8, mclk_div 2
 	I2S_TDM_1->I2S_LRCK_MASTER = 1;
+}
+
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+uint32_t i2s_ext_pio_init(void)
+{
+	/* set up I/O and common config */
+	i2s_ext_common_init();
 	
 	/* reset */
 	I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
@@ -137,7 +138,6 @@ uint32_t i2s_ext_init(void)
 	I2S_TDM_1->I2S_ENABLE = 1;
 	I2S_TDM_2->I2S_ENABLE = 1;
 
-
 	return 0;
 }
 
@@ -148,19 +148,8 @@ uint32_t i2s_ext_init(void)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-uint32_t i2s_ext_tx(uint32_t data)
+uint32_t i2s_ext_pio_tx(uint32_t data)
 {
-#if 0
-	/* GPIO test */
-	static uint32_t count = 0;
-	
-	GPIOB->SWPORTA_DR.bits.P25 = (count >> 0) & 1;
-	GPIOB->SWPORTA_DR.bits.P24 = (count >> 1) & 1;
-	GPIOB->SWPORTA_DR.bits.P27 = (count >> 2) & 1;
-	GPIOB->SWPORTA_DR.bits.P26 = (count >> 3) & 1;
-	
-	count++;
-#else
 	/* wait for fifo available */
 	uint32_t timeout = 10000;	// i0k about 35us - 48kHz is ~20us
 	uint32_t i2s_int = I2S_TDM_2->I2S_INT;
@@ -191,7 +180,6 @@ uint32_t i2s_ext_tx(uint32_t data)
 	/* clear int */
 	I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW;
 	__asm(""::: "memory");
-#endif
 	
 	return 0;
 }
@@ -203,7 +191,7 @@ uint32_t i2s_ext_tx(uint32_t data)
 ///
 /// \return 
 //-----------------------------------------------------------------------------------------
-uint32_t i2s_ext_rx(uint32_t *data)
+uint32_t i2s_ext_pio_rx(uint32_t *data)
 {
 	/* check RX FIFO */	
 	if(I2S_TDM_1->I2S_INT & I2S_TDM_I2S_INT_RX_FIFO_AVAIL_INT_RAW)
@@ -223,3 +211,111 @@ uint32_t i2s_ext_rx(uint32_t *data)
 	
 	return 0;
 }
+
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+uint32_t i2s_ext_irq_init(void)
+{
+	/* set up I/O and common config */
+	i2s_ext_common_init();
+	
+	/* reset */
+	I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
+	I2S_TDM_1->I2S_RESET = I2S_TDM_I2S_RESET_RX;
+	delayus(10);
+	I2S_TDM_2->I2S_RESET = 0;
+	I2S_TDM_1->I2S_RESET = 0;
+	
+	/* enable interrupts */
+	I2S_TDM_2->I2S_INT_EN = I2S_TDM_I2S_INT_EN_TX_FIFO_AVAIL_INT_EN | I2S_TDM_I2S_INT_EN_I2S_INT_EN;
+	I2S_TDM_1->I2S_INT_EN = I2S_TDM_I2S_INT_EN_RX_FIFO_AVAIL_INT_EN | I2S_TDM_I2S_INT_EN_I2S_INT_EN;
+	AIAO->i2s_sys_int_en = AIAO_I2S_SYS_INT_EN_I2S1_INT_EN |  AIAO_I2S_SYS_INT_EN_I2S2_INT_EN;
+
+	/* enable PLIC to handle I2S irqs */
+	plic_set_priority(PLIC0_IRQ_I2S2, 31);
+	plic_set_priority(PLIC0_IRQ_I2S1, 30);
+	plic_set_enable(PLIC0_IRQ_I2S2, 1, 1);
+	plic_set_enable(PLIC0_IRQ_I2S1, 1, 1);
+
+	printf("\n\nCheck IRQ settings & status before enable:\n\r");
+	printf("AIAO->i2s_sys_int_en = 0x%08X\n\r", AIAO->i2s_sys_int_en);
+	printf("AIAO->i2s_sys_ints = 0x%08X\n\r", AIAO->i2s_sys_ints);
+	printf("I2S_TDM_2->I2S_INT_EN = 0x%08X\n\r", I2S_TDM_2->I2S_INT_EN);
+	printf("I2S_TDM_2->I2S_INT = 0x%08X\n\r", I2S_TDM_2->I2S_INT);
+	printf("I2S_TDM_1->I2S_INT_EN = 0x%08X\n\r", I2S_TDM_1->I2S_INT_EN);
+	printf("I2S_TDM_1->I2S_INT = 0x%08X\n\r", I2S_TDM_1->I2S_INT);
+	printf("plic_get_priority(PLIC0_IRQ_I2S2) = 0x%08X\n\r", plic_get_priority(PLIC0_IRQ_I2S2));
+	printf("plic_get_priority(PLIC0_IRQ_I2S1) = 0x%08X\n\r", plic_get_priority(PLIC0_IRQ_I2S1));
+	printf("plic_get_enable(PLIC0_IRQ_I2S2) = 0x%08X\n\r", plic_get_enable(PLIC0_IRQ_I2S2, 1));
+	printf("plic_get_enable(PLIC0_IRQ_I2S1) = 0x%08X\n\r", plic_get_enable(PLIC0_IRQ_I2S1, 1));
+	printf("plic_get_pending(PLIC0_IRQ_I2S2) = 0x%08X\n\r", plic_get_pending(PLIC0_IRQ_I2S2));
+	printf("plic_get_pending(PLIC0_IRQ_I2S1) = 0x%08X\n\r", plic_get_pending(PLIC0_IRQ_I2S1));
+
+	/* enable slave first to keep in sync */
+	I2S_TDM_1->I2S_ENABLE = 1;
+	I2S_TDM_2->I2S_ENABLE = 1;
+
+	return 0;
+}
+
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+uint32_t i2s_ext_irq_tx(uint32_t data)
+{
+	/* check for fifo available IRQ */
+	if((I2S_TDM_2->I2S_INT & I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT))
+	{
+		__asm(""::: "memory");
+		
+		/* send data */
+		I2S_TDM_2->TX_WR_PORT = data;
+		__asm(""::: "memory");
+		
+		/* clear int */
+		I2S_TDM_2->I2S_INT = I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT;
+		__asm(""::: "memory");
+		
+		return 1;
+	}
+	
+	return 0;
+}
+
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+uint32_t i2s_ext_irq_rx(uint32_t *data)
+{
+	/* check RX FIFO */	
+	if(I2S_TDM_1->I2S_INT & I2S_TDM_I2S_INT_RX_FIFO_AVAIL_INT)
+	{
+		__asm(""::: "memory");
+		
+		/* get data */
+		*data = I2S_TDM_1->RX_RD_PORT;
+		__asm(""::: "memory");
+		
+		/* clear int */
+		I2S_TDM_1->I2S_INT = I2S_TDM_I2S_INT_RX_FIFO_AVAIL_INT;
+		__asm(""::: "memory");
+		
+		return 1;
+	}
+	
+	return 0;
+}
+

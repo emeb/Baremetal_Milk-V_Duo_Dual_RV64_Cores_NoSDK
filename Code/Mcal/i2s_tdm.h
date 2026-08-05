@@ -111,16 +111,27 @@ typedef struct {
 #define I2S_TDM_BLK_TX_FIFO_DMA_CLK_FORCE_EN		(1u<<17)
 #define I2S_TDM_I2S_RESET_RX						(1u)
 #define I2S_TDM_I2S_RESET_TX						(1u<<1)
+#define I2S_TDM_I2S_INT_EN_RX_FIFO_AVAIL_INT_EN		(1u<<0)
+#define I2S_TDM_I2S_INT_EN_RX_FIFO_OVFL_INT_EN		(1u<<1)
+#define I2S_TDM_I2S_INT_EN_RX_FIFO_UFL_INT_EN		(1u<<2)
+#define I2S_TDM_I2S_INT_EN_TX_FIFO_AVAIL_INT_EN		(1u<<4)
+#define I2S_TDM_I2S_INT_EN_TX_FIFO_OVFL_INT_EN		(1u<<5)
+#define I2S_TDM_I2S_INT_EN_TX_FIFO_UFL_INT_EN		(1u<<6)
+#define I2S_TDM_I2S_INT_EN_I2S_INT_EN				(1u<<8)
 #define I2S_TDM_I2S_INT_RX_FIFO_AVAIL_INT			(1u)
 #define I2S_TDM_I2S_INT_RX_FIFO_AVAIL_INT_RAW		(1u<<8)
 #define I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT			(1u<<4)
 #define I2S_TDM_I2S_INT_TX_FIFO_AVAIL_INT_RAW		(1u<<12)
+#define I2S_TDM_I2S_INT_I2S_INT_EN					(1u<<12)
+
 /* more to come... */
 
-void i2s_io_bypass(void);
-uint32_t i2s_ext_init(void);
-uint32_t i2s_ext_tx(uint32_t data);
-uint32_t i2s_ext_rx(uint32_t *data);
+uint32_t i2s_ext_pio_init(void);
+uint32_t i2s_ext_pio_tx(uint32_t data);
+uint32_t i2s_ext_pio_rx(uint32_t *data);
+uint32_t i2s_ext_irq_init(void);
+uint32_t i2s_ext_irq_tx(uint32_t data);
+uint32_t i2s_ext_irq_rx(uint32_t *data);
 
 
 #ifdef __cplusplus

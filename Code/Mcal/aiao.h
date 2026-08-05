@@ -214,6 +214,11 @@ typedef struct {
 #define AIAO_AUDIO_PDM_SEL_I2S_IO_I2S1_PDM 1
 #define AIAO_AUDIO_PDM_SEL_I2S_IO_I2S2_PDM 2
 
+#define AIAO_I2S_SYS_INT_EN_I2S0_INT_EN (1<<0)
+#define AIAO_I2S_SYS_INT_EN_I2S1_INT_EN (1<<1)
+#define AIAO_I2S_SYS_INT_EN_I2S2_INT_EN (1<<2)
+#define AIAO_I2S_SYS_INT_EN_I2S3_INT_EN (1<<3)
+#define AIAO_I2S_SYS_INT_EN_I2S_SUBSYS_INT_EN (1<<8)
 
 #ifdef __cplusplus
 }

@@ -79,7 +79,10 @@ void plic_set_pending(uint32_t irqnum, uint32_t enable)
 	uint32_t reg = irqnum >> 5;
 	uint32_t shift = irqnum & 0x1f;
 	
-	*(uint32_t *)(PLIC_BASE + PLIC_IP_OFFSET + 4 * reg) = (enable & 1) << shift;
+	if(enable)
+		*(uint32_t *)(PLIC_BASE + PLIC_IP_OFFSET + 4 * reg) |= (1u << shift);
+	else
+		*(uint32_t *)(PLIC_BASE + PLIC_IP_OFFSET + 4 * reg) &= ~(1u << shift);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -115,7 +118,10 @@ void plic_set_enable(uint32_t irqnum, uint32_t supervisor, uint32_t enable)
 	uint32_t reg = (irqnum >> 5) + (0x20 * (supervisor & 1));
 	uint32_t shift = irqnum & 0x1f;
 	
-	*(uint32_t *)(PLIC_BASE + PLIC_IE_OFFSET + 4 * reg) = (enable & 1) << shift;
+	if(enable)
+		*(uint32_t *)(PLIC_BASE + PLIC_IE_OFFSET + 4 * reg) |= (1u << shift);
+	else
+		*(uint32_t *)(PLIC_BASE + PLIC_IE_OFFSET + 4 * reg) &= ~(1u << shift);
 }
 
 //-----------------------------------------------------------------------------------------

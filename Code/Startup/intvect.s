@@ -58,7 +58,7 @@ InterruptVectorTable_s:
                         j .                 /* IRQ 6 (Reserved) */
                         j .                 /* IRQ 7 (Machine Timer Interrupt) */
                         j .                 /* IRQ 8 (Reserved) */
-                        j .                 /* IRQ 9 (Supervisor External Interrupt - PLIC) */
+                        j s_ext_interrupt   /* IRQ 9 (Supervisor External Interrupt - PLIC) */
                         j .                 /* IRQ 10 (Reserved) */
                         j .                 /* IRQ 11 (Machine External Interrupt - PLIC) */
 .option pop
@@ -161,6 +161,26 @@ s_timer_interrupt:
                   sret
 
 .size s_timer_interrupt, .-s_timer_interrupt
+
+/*******************************************************************************************
+  \brief  
+  
+  \param  
+  
+  \return 
+********************************************************************************************/
+.section ".text", "ax"
+.align 2
+.globl s_ext_interrupt
+.type  s_ext_interrupt, @function
+
+s_ext_interrupt:
+                  save_context
+                  jal isr_ext
+                  restore_context
+                  sret
+
+.size s_ext_interrupt, .-s_ext_interrupt
 
 /*
 -----------------------------------------------------------------

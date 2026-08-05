@@ -33,12 +33,14 @@
 #include "aiao.h"
 #include "i2s_tdm.h"
 #include "delay.h"
+#include "plic.h"
 
 //-----------------------------------------------------------------------------------------
 // Function Prototypes
 //-----------------------------------------------------------------------------------------
 int main_core1(void);
 void isr_timer(void);
+void isr_ext(void);
 
 //-----------------------------------------------------------------------------------------
 // Globals
@@ -50,6 +52,12 @@ volatile uint64_t sync = 0x0102030405060708;
 const char *bdate = __DATE__;
 const char *btime = __TIME__;
 const char *fwVersionStr = "V0.1";
+
+/* I2S testing */
+volatile uint32_t i2s_buffer[128], i2s_tx_ptr = 0, i2s_tx = 0, i2s_tx_err = 0,
+	i2s_rx = 0, i2s_rx_err = 0, i2s_rx_data, i2s_cnt = 0, isr_ext_cnt = 0;
+	
+#define I2S_IRQ
 
 //-----------------------------------------------------------------------------------------
 // Defines
@@ -150,15 +158,17 @@ int main(void)
 
 #if 1
 	/* generate some audio data */
-	uint32_t i2s_buffer[128], i2s_tx_ptr = 0, i2s_tx = 0, i2s_tx_err = 0,
-		i2s_rx = 0, i2s_rx_data, i2s_cnt = 0;
 	for(uint32_t i=0;i<128;i++)
 	{
 		i2s_buffer[i] = ((i<<9)&0xFFFF) | ((((128-i)<<9)&0xFFFF)<<16);
 	}
 
 	/* start I2S external */
-	if(i2s_ext_init())
+#ifndef I2S_IRQ
+	if(i2s_ext_pio_init())
+#else
+	if(i2s_ext_irq_init())
+#endif
 	{
 		printf("I2S Ext init failed\n\r");
 	}
@@ -257,7 +267,24 @@ int main(void)
 	printf("    I2S_TDM_2->RX_RD_PORT_1 = 0x%08X\n\r", &(I2S_TDM_2->RX_RD_PORT_1));
 	printf("      I2S_TDM_2->TX_WR_PORT = 0x%08X\n\r", &(I2S_TDM_2->TX_WR_PORT));
 	printf("    I2S_TDM_2->TX_WR_PORT_1 = 0x%08X\n\r", &(I2S_TDM_2->TX_WR_PORT_1));
-#endif		
+#endif
+#if 1
+	printf("\n\nCheck IRQ settings & status after startup:\n\r");
+	printf("PLIC0_IRQ_I2S2 = %d\n\r", PLIC0_IRQ_I2S2);
+	printf("PLIC0_IRQ_I2S1 = %d\n\r", PLIC0_IRQ_I2S1);
+	printf("AIAO->i2s_sys_int_en = 0x%08X\n\r", AIAO->i2s_sys_int_en);
+	printf("AIAO->i2s_sys_ints = 0x%08X\n\r", AIAO->i2s_sys_ints);
+	printf("I2S_TDM_2->I2S_INT_EN = 0x%08X\n\r", I2S_TDM_2->I2S_INT_EN);
+	printf("I2S_TDM_2->I2S_INT = 0x%08X\n\r", I2S_TDM_2->I2S_INT);
+	printf("I2S_TDM_1->I2S_INT_EN = 0x%08X\n\r", I2S_TDM_1->I2S_INT_EN);
+	printf("I2S_TDM_1->I2S_INT = 0x%08X\n\r", I2S_TDM_1->I2S_INT);
+	printf("plic_get_priority(PLIC0_IRQ_I2S2) = 0x%08X\n\r", plic_get_priority(PLIC0_IRQ_I2S2));
+	printf("plic_get_priority(PLIC0_IRQ_I2S1) = 0x%08X\n\r", plic_get_priority(PLIC0_IRQ_I2S1));
+	printf("plic_get_enable(PLIC0_IRQ_I2S2) = 0x%08X\n\r", plic_get_enable(PLIC0_IRQ_I2S2, 1));
+	printf("plic_get_enable(PLIC0_IRQ_I2S1) = 0x%08X\n\r", plic_get_enable(PLIC0_IRQ_I2S1, 1));
+	printf("plic_get_pending(PLIC0_IRQ_I2S2) = 0x%08X\n\r", plic_get_pending(PLIC0_IRQ_I2S2));
+	printf("plic_get_pending(PLIC0_IRQ_I2S1) = 0x%08X\n\n\r", plic_get_pending(PLIC0_IRQ_I2S1));
+#endif
 #endif
 
 	/* endless loop */
@@ -310,10 +337,11 @@ int main(void)
 #endif
 
 #if 1
-		/* transmit - wrapped with GPIO toggle for diag */
+#ifndef I2S_IRQ
+		/* PIO mode - transmit - wrapped with GPIO toggle for diag */
 		GPIOA->SWPORTA_DR.bits.P26 = 1;
 		__asm(""::: "memory");
-		if(i2s_ext_tx(i2s_buffer[i2s_tx_ptr]))
+		if(i2s_ext_pio_tx(i2s_buffer[i2s_tx_ptr]))
 			i2s_tx_err++;
 		else
 			i2s_tx++;
@@ -322,14 +350,18 @@ int main(void)
 		__asm(""::: "memory");
 		
 		/* receive - not actually using data yet */
-		if(i2s_ext_rx(&i2s_rx_data))
+		if(i2s_ext_pio_rx(&i2s_rx_data))
 			i2s_rx++;
-		
+#else
+		/* IRQ mode I/O handled in ISR so just delay a bit */
+		delayus(21);	// roughly 1/48k
+#endif
+
 		/* status */
 		if(i2s_cnt++ > 48000)
 		{
 			i2s_cnt = 0;
-			printf("%8d %8d %8d %8d\n\r", i2s_tx, i2s_tx_err, i2s_rx, i2s_tx-i2s_rx);
+			printf("%8d %8d %8d %8d %8d %8d\n\r", i2s_tx, i2s_tx_err, i2s_rx, i2s_rx_err, i2s_tx-i2s_rx, isr_ext_cnt);
 		}
 #endif
 		//delayms(100);
@@ -402,5 +434,70 @@ void isr_timer(void)
     /* error identifying the active core */
     __asm("j .");
   }
+}
+
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+void isr_ext(void)
+{
+	uint32_t ActiveCore = osGetActiveCore();
+
+	isr_ext_cnt++;
+	
+	if(CORE0_ID == ActiveCore)
+	{
+		/* which IRQ was it? */
+		uint32_t id = plic_get_claim(1);
+
+		/* do stuff */
+		if(id == PLIC0_IRQ_I2S2)
+		{
+			/* master tx */
+			GPIOA->SWPORTA_DR.bits.P26 = 1;
+			__asm(""::: "memory");
+			
+			if(i2s_ext_irq_tx(i2s_buffer[i2s_tx_ptr]))
+			{
+				i2s_tx++;
+				i2s_tx_ptr = (i2s_tx_ptr + 1) & 0x7f;
+			}
+			else
+				i2s_tx_err++;
+
+			GPIOA->SWPORTA_DR.bits.P26 = 0;
+			__asm(""::: "memory");
+		}
+		else if(id == PLIC0_IRQ_I2S1)
+		{
+			/* slave rx */
+			if(i2s_ext_irq_rx((uint32_t *)&i2s_rx_data))
+				i2s_rx++;
+			else
+				i2s_rx_err++;
+		}
+
+		/* clear the IRQ */
+		plic_set_claim(1, id);
+	}
+	else if(CORE1_ID == ActiveCore)
+	{
+		/* which IRQ was it? */
+		uint32_t id = plic_get_claim(1);
+
+		/* do stuff */
+
+		/* clear the IRQ */
+		plic_set_claim(1, id);
+	}
+	else
+	{
+		/* error identifying the active core */
+		__asm("j .");
+	}
 }
 
