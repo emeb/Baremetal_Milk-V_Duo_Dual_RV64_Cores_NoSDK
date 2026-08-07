@@ -19,6 +19,8 @@
 #include "gpio.h"
 #include "pinmux.h"
 #include "plic.h"
+#include "sysctl.h"
+#include "sdma.h"
 #include "printf.h"
 #include "delay.h"
 
@@ -113,6 +115,13 @@ void i2s_ext_common_init(void)
 	I2S_TDM_1->I2S_CLK_CTRL0 = 0x1c0;	// aud_ena, mclk ena, bclk_out_force_ena
 	I2S_TDM_1->I2S_CLK_CTRL1 = 0x00080002;	// bclk_div 8, mclk_div 2
 	I2S_TDM_1->I2S_LRCK_MASTER = 1;
+	
+	/* reset */
+	I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
+	I2S_TDM_1->I2S_RESET = I2S_TDM_I2S_RESET_RX;
+	delayus(10);
+	I2S_TDM_2->I2S_RESET = 0;
+	I2S_TDM_1->I2S_RESET = 0;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -126,13 +135,6 @@ uint32_t i2s_ext_pio_init(void)
 {
 	/* set up I/O and common config */
 	i2s_ext_common_init();
-	
-	/* reset */
-	I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
-	I2S_TDM_1->I2S_RESET = I2S_TDM_I2S_RESET_RX;
-	delayus(10);
-	I2S_TDM_2->I2S_RESET = 0;
-	I2S_TDM_1->I2S_RESET = 0;
 	
 	/* enable slave first to keep in sync */
 	I2S_TDM_1->I2S_ENABLE = 1;
@@ -224,13 +226,6 @@ uint32_t i2s_ext_irq_init(void)
 	/* set up I/O and common config */
 	i2s_ext_common_init();
 	
-	/* reset */
-	I2S_TDM_2->I2S_RESET = I2S_TDM_I2S_RESET_TX;
-	I2S_TDM_1->I2S_RESET = I2S_TDM_I2S_RESET_RX;
-	delayus(10);
-	I2S_TDM_2->I2S_RESET = 0;
-	I2S_TDM_1->I2S_RESET = 0;
-	
 	/* enable interrupts */
 	I2S_TDM_2->I2S_INT_EN = I2S_TDM_I2S_INT_EN_TX_FIFO_AVAIL_INT_EN | I2S_TDM_I2S_INT_EN_I2S_INT_EN;
 	I2S_TDM_1->I2S_INT_EN = I2S_TDM_I2S_INT_EN_RX_FIFO_AVAIL_INT_EN | I2S_TDM_I2S_INT_EN_I2S_INT_EN;
@@ -317,5 +312,71 @@ uint32_t i2s_ext_irq_rx(uint32_t *data)
 	}
 	
 	return 0;
+}
+
+/* DMA state */
+uint32_t *buffptr[2], tsz, dma_seq;
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+uint32_t i2s_ext_dma_init(uint32_t *buffer, uint32_t len)
+{
+	/* set up the double buffers */
+	buffptr[0] = buffer;				// 1st half
+	buffptr[1] = buffer + len/2;		// 2nd half
+	tsz = (uint32_t)sizeof(uint32_t) * len/2;		// in bytes!
+	dma_seq = 0;
+	
+	/* set up I/O and common config */
+	i2s_ext_common_init();
+	
+	/* enable DMA in I2S TX (tx only for now) */
+	I2S_TDM_2->BLK_MODE_SETTING |= I2S_TDM_BLK_MODE_SETTING_DMA_MODE;
+	__asm(""::: "memory");
+	
+	/* set up SDMA CHL1 for I2S2 TX */
+	sysctl_sdma_ch_remap_set(0, SYSCTL_SDMA_TX_REQ_I2S2); // route I2S2 TX to Chl1
+	DMAC_CH1->SAR = (uint64_t)buffptr[dma_seq];
+	DMAC_CH1->DAR = (uint64_t)&(I2S_TDM_2->TX_WR_PORT);
+	DMAC_CH1->BLOCK_TS = tsz;
+	
+	/* enable SDMA & interrupt */
+	DMAC->CFGREG = DMAC_CFGREG_DMAC_EN | DMAC_CFGREG_INT_EN;
+	
+	/* enable PLIC to handle SDMA irqs */
+	plic_set_priority(PLIC0_IRQ_SYS_DMA, 31);
+	plic_set_enable(PLIC0_IRQ_SYS_DMA, 1, 1);
+
+	/* enable slave first to keep in sync */
+	//I2S_TDM_1->I2S_ENABLE = 1;
+	I2S_TDM_2->I2S_ENABLE = 1;
+	
+	return 0;
+}
+
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+void i2s_ext_dma_tx_callback(void)
+{
+}
+
+//-----------------------------------------------------------------------------------------
+/// \brief  
+///
+/// \param  
+///
+/// \return 
+//-----------------------------------------------------------------------------------------
+void i2s_ext_dma_rx_callback(void)
+{
 }
 

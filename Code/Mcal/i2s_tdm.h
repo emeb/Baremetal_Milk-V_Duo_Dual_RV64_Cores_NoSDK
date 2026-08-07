@@ -132,6 +132,9 @@ uint32_t i2s_ext_pio_rx(uint32_t *data);
 uint32_t i2s_ext_irq_init(void);
 uint32_t i2s_ext_irq_tx(uint32_t data);
 uint32_t i2s_ext_irq_rx(uint32_t *data);
+uint32_t i2s_ext_dma_init(uint32_t *buffer, uint32_t len);
+void i2s_ext_dma_tx_callback(void);
+void i2s_ext_dma_rx_callback(void);
 
 
 #ifdef __cplusplus

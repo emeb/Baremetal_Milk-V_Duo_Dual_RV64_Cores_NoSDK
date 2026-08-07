@@ -211,7 +211,7 @@ endif
 ############################################################################################
 
 SRC_FILES := $(SRC_DIR)/Appli/main.c            \
-             $(SRC_DIR)/Appli/soft_uart.c       \
+             $(SRC_DIR)/Mcal/soft_uart.c       \
              $(SRC_DIR)/Mcal/core.c             \
              $(SRC_DIR)/Mcal/uart.c             \
              $(SRC_DIR)/Mcal/spi.c              \

@@ -57,7 +57,8 @@ const char *fwVersionStr = "V0.1";
 volatile uint32_t i2s_buffer[128], i2s_tx_ptr = 0, i2s_tx = 0, i2s_tx_err = 0,
 	i2s_rx = 0, i2s_rx_err = 0, i2s_rx_data, i2s_cnt = 0, isr_ext_cnt = 0;
 	
-#define I2S_IRQ
+//#define I2S_IRQ
+#define I2S_DMA
 
 //-----------------------------------------------------------------------------------------
 // Defines
@@ -164,10 +165,14 @@ int main(void)
 	}
 
 	/* start I2S external */
+#ifdef I2S_DMA
+	if(i2s_ext_dma_init((uint32_t *)i2s_buffer, sizeof(i2s_buffer)/sizeof(uint32_t)))
+#else
 #ifndef I2S_IRQ
 	if(i2s_ext_pio_init())
 #else
 	if(i2s_ext_irq_init())
+#endif
 #endif
 	{
 		printf("I2S Ext init failed\n\r");
@@ -268,7 +273,7 @@ int main(void)
 	printf("      I2S_TDM_2->TX_WR_PORT = 0x%08X\n\r", &(I2S_TDM_2->TX_WR_PORT));
 	printf("    I2S_TDM_2->TX_WR_PORT_1 = 0x%08X\n\r", &(I2S_TDM_2->TX_WR_PORT_1));
 #endif
-#if 1
+#if 0
 	printf("\n\nCheck IRQ settings & status after startup:\n\r");
 	printf("PLIC0_IRQ_I2S2 = %d\n\r", PLIC0_IRQ_I2S2);
 	printf("PLIC0_IRQ_I2S1 = %d\n\r", PLIC0_IRQ_I2S1);
@@ -350,10 +355,10 @@ int main(void)
 		__asm(""::: "memory");
 		
 		/* receive - not actually using data yet */
-		if(i2s_ext_pio_rx(&i2s_rx_data))
+		if(i2s_ext_pio_rx((uint32_t *)&i2s_rx_data))
 			i2s_rx++;
 #else
-		/* IRQ mode I/O handled in ISR so just delay a bit */
+		/* DMA & IRQ mode I/O handled in ISR so just delay a bit */
 		delayus(21);	// roughly 1/48k
 #endif
 
@@ -455,6 +460,7 @@ void isr_ext(void)
 		uint32_t id = plic_get_claim(1);
 
 		/* do stuff */
+#ifdef I2S_IRQ
 		if(id == PLIC0_IRQ_I2S2)
 		{
 			/* master tx */
@@ -480,6 +486,14 @@ void isr_ext(void)
 			else
 				i2s_rx_err++;
 		}
+#endif
+
+#ifdef I2S_DMA
+		if(id == PLIC0_IRQ_SYS_DMA)
+		{
+			/* handle SDMA IRQ */
+		}
+#endif
 
 		/* clear the IRQ */
 		plic_set_claim(1, id);
