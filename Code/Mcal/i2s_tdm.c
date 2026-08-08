@@ -343,8 +343,23 @@ uint32_t i2s_ext_dma_init(uint32_t *buffer, uint32_t len)
 	DMAC_CH1->SAR = (uint64_t)buffptr[dma_seq];
 	DMAC_CH1->DAR = (uint64_t)&(I2S_TDM_2->TX_WR_PORT);
 	DMAC_CH1->BLOCK_TS = tsz;
+	uint64_t tmp64 = DMAC_CHX_CFG_SRC_MULTBLK_TYPE_CONT; // SAR ends w/ next addr 
+	tmp64 |= DMAC_CHX_CFG_DST_MULTBLK_TYPE_CONT; // don't care
+	tmp64 |= DMAC_CHX_CFG_TT_FC_M2P_DST; // mem to periph, perif controls flow
+	tmp64 |= DMAC_CHX_CFG_CH_PRIOR_7; // also defaults: HW handshake, pos pol, no lock, 1 outstanding request
+	DMAC_CH1->CFG = tmp64;
+	tmp64  = DMAC_CHX_CTL_SMS(0) ;	// src on axi 0
+	tmp64 |= DMAC_CHX_CTL_DMS(1) ;	// dest on axi 1
+	tmp64 |= DMAC_CHX_CTL_SRC_INC;	// src inc addr
+	tmp64 |= DMAC_CHX_CTL_DST_FIX;	// dst fixed addr
 	
-	/* enable SDMA & interrupt */
+	DMAC_CH1->CTL = tmp64;
+	
+	/* enable CHL1 transer done interrupt */
+	DMAC_CH1->INTSTATUS_ENABLEREG = DMAC_CHX_INTSTATUS_DMA_TFR_DONE;
+	DMAC_CH1->INTSIGNAL_ENABLEREG = DMAC_CHX_INTSIGNAL_DMA_TFR_DONE;
+	
+	/* enable top-level SDMA & interrupt */
 	DMAC->CFGREG = DMAC_CFGREG_DMAC_EN | DMAC_CFGREG_INT_EN;
 	
 	/* enable PLIC to handle SDMA irqs */
